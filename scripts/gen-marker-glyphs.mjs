@@ -19,6 +19,7 @@ const icons = {
   waterColor: "droplets",
   manmade: "factory",
   plane: "plane",
+  satellite: "satellite",
 };
 
 const toAttrs = (props) =>

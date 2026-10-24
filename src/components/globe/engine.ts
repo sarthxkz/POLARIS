@@ -1,5 +1,10 @@
 import {
   BillboardCollection,
+  BoundingSphere,
+  CallbackPositionProperty,
+  HeadingPitchRange,
+  Matrix4,
+  TrackingReferenceFrame,
   Cartesian2,
   Cartesian3,
   CesiumWidget,
@@ -24,11 +29,12 @@ import {
   VerticalOrigin,
   WebMercatorTilingScheme,
   type Billboard,
+  type Entity,
   type Label,
   type PointPrimitive,
   type Polyline,
 } from "cesium";
-import { aircraftMarker, eventImage } from "./markers";
+import { aircraftMarker, eventImage, satelliteMarker } from "./markers";
 import { DATA } from "@/lib/palette";
 import { estimate, orbitPath, type SatelliteTrack } from "@/lib/orbits";
 import type { AircraftRow, NaturalEvent } from "@/lib/types";
@@ -61,6 +67,33 @@ export interface CityLabel {
   rank: number;
 }
 
+/** Idle rotation: a full turn in about 3¾ minutes, west to east like the real planet. */
+const ROTATE_RAD_PER_S = CesiumMath.toRadians(1.6);
+/** Seconds without input before idle rotation eases back in. */
+const IDLE_BEFORE_ROTATE_MS = 5_000;
+/** Satellite trails: one sample every 15 s, 12 samples = the last three minutes. */
+const TRAIL_STEP_MS = 15_000;
+const TRAIL_SAMPLES = 12;
+/** Well-known spacecraft that get a name label beside their point. */
+const NAMED_SATELLITES: Record<number, string> = { 25544: "ISS", 48274: "Tiangong", 20580: "Hubble" };
+
+interface SatEntry {
+  track: SatelliteTrack;
+  point: PointPrimitive;
+  trail: Polyline;
+  label: Label | null;
+  /** Keyframe at the start of the current second, and one second later; drawn by interpolation. */
+  a: Cartesian3;
+  b: Cartesian3;
+  /** Interpolated position this frame. */
+  current: Cartesian3;
+  history: Cartesian3[];
+  lastHistory: number;
+  valid: boolean;
+}
+
+const smoothstep = (x: number) => x * x * (3 - 2 * x);
+
 /** Aircraft draw only when the camera is closer than this; the rail says so. */
 export const AIRCRAFT_VISIBLE_WITHIN_M = 9_000_000;
 
@@ -90,13 +123,25 @@ export class GlobeEngine {
   private aircraft = new BillboardCollection();
   private aircraftPoints = new PointPrimitiveCollection();
   private satellites = new PointPrimitiveCollection();
+  private satTrails = new PolylineCollection();
+  private satLabels = new LabelCollection();
   private paths = new PolylineCollection();
   private borders = new PolylineCollection();
   private labels = new LabelCollection();
   private imagery: Partial<Record<ImageryKey, ImageryLayer>> = {};
   private eventById = new Map<string, { event: NaturalEvent; billboard: Billboard }>();
   private aircraftById = new Map<string, { row: AircraftRow; billboard: Billboard; point: PointPrimitive }>();
-  private satelliteById = new Map<number, { track: SatelliteTrack; point: PointPrimitive }>();
+  private satelliteById = new Map<number, SatEntry>();
+  private keyT0 = 0;
+  private trailsOn = true;
+  private autoRotate = false;
+  private rotateRamp = 0;
+  private lastInteraction = 0;
+  private lastFrame = 0;
+  private flying = false;
+  private zoomRemaining = 0;
+  private tracked: Entity | null = null;
+  private introPending = true;
   private selection: Selection | null = null;
   private selectionPaths: Polyline[] = [];
   private satelliteTimer: number | null = null;
@@ -118,11 +163,25 @@ export class GlobeEngine {
   onCameraHeight: (metres: number) => void = () => {};
   /** Click on open ground (no object under the pointer), with its coordinates. */
   onPickGround: (point: { lon: number; lat: number } | null) => void = () => {};
+  /** Fires once, when the first imagery tiles have drawn (so the page can fade the globe in). */
+  onFirstTiles: () => void = () => {};
+  /** Whether idle rotation is currently turning the globe. */
+  onRotating: (rotating: boolean) => void = () => {};
 
   /** Replaces any of the callbacks above. */
   setHandlers(
     handlers: Partial<
-      Pick<GlobeEngine, "onSelect" | "onHover" | "onSelectionScreen" | "onCameraHeight" | "onPickGround" | "onFlight">
+      Pick<
+        GlobeEngine,
+        | "onSelect"
+        | "onHover"
+        | "onSelectionScreen"
+        | "onCameraHeight"
+        | "onPickGround"
+        | "onFlight"
+        | "onFirstTiles"
+        | "onRotating"
+      >
     >,
   ) {
     Object.assign(this, handlers);
@@ -146,7 +205,10 @@ export class GlobeEngine {
     });
 
     const { scene, clock } = this.widget;
-    if (options.lowPower) this.widget.resolutionScale = 0.8;
+    if (options.lowPower) {
+      this.widget.resolutionScale = 0.8;
+      this.widget.targetFrameRate = 30;
+    }
 
     const globe = scene.globe;
     globe.baseColor = Color.fromCssColorString("#0a1019");
@@ -164,8 +226,10 @@ export class GlobeEngine {
     const camera = scene.screenSpaceCameraController;
     camera.minimumZoomDistance = 2_000;
     camera.maximumZoomDistance = 45_000_000;
-    camera.inertiaSpin = options.reducedMotion ? 0 : 0.85;
-    camera.inertiaZoom = options.reducedMotion ? 0 : 0.7;
+    // Softer inertia makes drags glide to a stop instead of halting.
+    camera.inertiaSpin = options.reducedMotion ? 0 : 0.9;
+    camera.inertiaTranslate = options.reducedMotion ? 0 : 0.9;
+    camera.inertiaZoom = options.reducedMotion ? 0 : 0.8;
 
     clock.currentTime = JulianDate.now();
 
@@ -173,13 +237,16 @@ export class GlobeEngine {
     scene.primitives.add(this.labels);
     scene.primitives.add(this.paths);
     scene.primitives.add(this.events);
+    scene.primitives.add(this.satTrails);
     scene.primitives.add(this.satellites);
+    scene.primitives.add(this.satLabels);
     scene.primitives.add(this.aircraftPoints);
     scene.primitives.add(this.aircraft);
 
     this.addImagery("nightLights", true);
 
-    this.home(false);
+    // Start further out; intro() brings the camera in once the first tiles have drawn.
+    this.home(false, options.reducedMotion ? 1 : 2.3);
 
     this.handler = new ScreenSpaceEventHandler(scene.canvas);
     this.handler.setInputAction(
@@ -202,6 +269,102 @@ export class GlobeEngine {
 
     // Keep the day/night terminator honest while the visitor is idle.
     this.lightingTimer = window.setInterval(() => this.render(), 60_000);
+
+    // Any direct input pauses idle rotation; it eases back in after a few quiet seconds.
+    const canvas = this.widget.canvas;
+    const note = () => {
+      this.lastInteraction = Date.now();
+    };
+    canvas.addEventListener("pointerdown", note);
+    canvas.addEventListener("wheel", note, { passive: true });
+    canvas.addEventListener("pointermove", (e) => {
+      if (e.buttons) note();
+    });
+
+    clock.onTick.addEventListener(() => this.frame());
+
+    const onProgress = (queued: number) => {
+      if (queued > 0 || !this.introPending) return;
+      this.introPending = false;
+      globe.tileLoadProgressEvent.removeEventListener(onProgress);
+      this.onFirstTiles();
+    };
+    globe.tileLoadProgressEvent.addEventListener(onProgress);
+    // A slow network should not keep the globe hidden.
+    window.setTimeout(() => onProgress(0), 4_000);
+  }
+
+  /* ───────────────────────────── Motion ───────────────────────────── */
+
+  /** One-time arrival: the camera glides in from far out (rare, first-visit motion). */
+  intro() {
+    const destination = this.homeDestination(1);
+    const camera = this.widget.scene.camera;
+    if (this.options.reducedMotion) {
+      camera.setView({ destination });
+    } else {
+      this.flying = true;
+      camera.flyTo({
+        destination,
+        duration: 2.8,
+        easingFunction: EasingFunction.QUARTIC_OUT,
+        complete: () => this.endFlight(),
+        cancel: () => this.endFlight(),
+      });
+    }
+    this.render();
+  }
+
+  setAutoRotate(on: boolean) {
+    this.autoRotate = on && !this.options.reducedMotion;
+    if (!this.autoRotate) this.rotateRamp = 0;
+    this.render();
+  }
+
+  private endFlight() {
+    this.flying = false;
+    this.lastInteraction = Date.now();
+  }
+
+  /**
+   * Runs every animation frame (Cesium clock tick). Rendering is on demand, so this asks for a
+   * frame only while something is actually moving: rotation, a smooth zoom, a followed satellite,
+   * or satellites seen up close.
+   */
+  private frame() {
+    if (this.destroyed) return;
+    const now = performance.now();
+    const dt = this.lastFrame ? Math.min(0.1, (now - this.lastFrame) / 1000) : 0;
+    this.lastFrame = now;
+    const camera = this.widget.scene.camera;
+    let moving = false;
+
+    if (Math.abs(this.zoomRemaining) > 50) {
+      const step = this.zoomRemaining * Math.min(1, dt * 8);
+      camera.zoomIn(step);
+      this.zoomRemaining -= step;
+      moving = true;
+    }
+
+    const idle = Date.now() - this.lastInteraction > IDLE_BEFORE_ROTATE_MS;
+    const wantRotate = this.autoRotate && !this.selection && !this.tracked && !this.flying && idle;
+    const wasRotating = this.rotateRamp > 0;
+    // Ease in over 1.5 s so rotation never starts with a jolt; stop at once when touched.
+    this.rotateRamp = wantRotate ? Math.min(1, this.rotateRamp + dt / 1.5) : 0;
+    if (this.rotateRamp > 0) {
+      camera.rotate(Cartesian3.UNIT_Z, -ROTATE_RAD_PER_S * smoothstep(this.rotateRamp) * dt);
+      moving = true;
+    }
+    if (wasRotating !== this.rotateRamp > 0) this.onRotating(this.rotateRamp > 0);
+
+    if (this.satellites.show && this.satelliteById.size > 0) {
+      const close = camera.positionCartographic.height < 8_000_000;
+      if (moving || close || this.tracked || this.selection?.kind === "satellite") {
+        this.interpolateSatellites();
+        moving = true;
+      }
+    }
+    if (moving || this.tracked) this.render();
   }
 
   private render() {
@@ -571,24 +734,97 @@ export class GlobeEngine {
   /* ───────────────────────────── Satellites ───────────────────────────── */
 
   setSatellites(tracks: SatelliteTrack[]) {
+    if (this.tracked) this.stopTracking();
     this.satellites.removeAll();
+    this.satTrails.removeAll();
+    this.satLabels.removeAll();
     this.satelliteById.clear();
     const color = Color.fromCssColorString(DATA.satellite);
     const outline = Color.fromCssColorString("#04070c");
+    const trailMaterial = Material.fromType("Color", { color: color.withAlpha(0.32) });
+    const now = Date.now();
     for (const track of tracks) {
+      const here = estimate(track, new Date(now));
+      const next = estimate(track, new Date(now + 1000));
+      const current = here ? new Cartesian3(...here.ecef) : new Cartesian3();
+      // Seed the trail with the last three minutes so it is there from the first frame.
+      const history: Cartesian3[] = [];
+      for (let k = TRAIL_SAMPLES; k >= 1; k--) {
+        const past = estimate(track, new Date(now - k * TRAIL_STEP_MS));
+        if (past) history.push(new Cartesian3(...past.ecef));
+      }
+      const id = { kind: "satellite", id: track.noradId, label: track.name } satisfies PickInfo;
       const point = this.satellites.add({
-        position: Cartesian3.ZERO,
-        pixelSize: 4.5,
+        position: current,
+        pixelSize: 5,
         color,
         outlineColor: outline,
         outlineWidth: 1.5,
-        scaleByDistance: new NearFarScalar(1e6, 1.4, 6e7, 0.8),
-        id: { kind: "satellite", id: track.noradId, label: track.name } satisfies PickInfo,
+        scaleByDistance: new NearFarScalar(1e6, 1.5, 6e7, 0.8),
+        show: here !== null,
+        id,
       });
-      this.satelliteById.set(track.noradId, { track, point });
+      const trail = this.satTrails.add({
+        positions: here ? [...history, current] : [],
+        width: 1.5,
+        material: trailMaterial,
+        show: here !== null && this.trailsOn,
+        id,
+      });
+      const name = NAMED_SATELLITES[track.noradId];
+      const label = name
+        ? this.satLabels.add({
+            position: current,
+            text: name,
+            font: "500 12px sans-serif",
+            fillColor: color,
+            outlineColor: outline,
+            outlineWidth: 3,
+            style: LabelStyle.FILL_AND_OUTLINE,
+            horizontalOrigin: HorizontalOrigin.LEFT,
+            verticalOrigin: VerticalOrigin.CENTER,
+            pixelOffset: new Cartesian2(9, 0),
+            show: here !== null,
+          })
+        : null;
+      this.satelliteById.set(track.noradId, {
+        track,
+        point,
+        trail,
+        label,
+        a: Cartesian3.clone(current),
+        b: next ? new Cartesian3(...next.ecef) : Cartesian3.clone(current),
+        current,
+        history,
+        lastHistory: now,
+        valid: here !== null,
+      });
     }
-    this.tickSatellites();
+    this.keyT0 = now;
     this.applySatelliteFilter();
+  }
+
+  /** Font for the spacecraft name labels, matched to the interface. */
+  setSatelliteLabelFont(font: string) {
+    this.satLabels.removeAll();
+    for (const entry of this.satelliteById.values()) {
+      const name = NAMED_SATELLITES[entry.track.noradId];
+      if (!name) continue;
+      entry.label = this.satLabels.add({
+        position: entry.current,
+        text: name,
+        font: `500 12px ${font}`,
+        fillColor: Color.fromCssColorString(DATA.satellite),
+        outlineColor: Color.fromCssColorString("#04070c"),
+        outlineWidth: 3,
+        style: LabelStyle.FILL_AND_OUTLINE,
+        horizontalOrigin: HorizontalOrigin.LEFT,
+        verticalOrigin: VerticalOrigin.CENTER,
+        pixelOffset: new Cartesian2(9, 0),
+        show: entry.point.show,
+      });
+    }
+    this.render();
   }
 
   setSatelliteFilter(filter: (t: SatelliteTrack) => boolean) {
@@ -597,12 +833,26 @@ export class GlobeEngine {
   }
 
   private applySatelliteFilter() {
-    for (const { track, point } of this.satelliteById.values()) point.show = this.satelliteFilter(track);
+    const trackedId = this.tracked ? this.selectedSatelliteId() : null;
+    for (const entry of this.satelliteById.values()) {
+      const show = entry.valid && this.satelliteFilter(entry.track);
+      // The followed satellite is drawn by its icon instead of its point.
+      entry.point.show = show && entry.track.noradId !== trackedId;
+      entry.trail.show = show && this.trailsOn;
+      if (entry.label) entry.label.show = show;
+    }
     this.render();
+  }
+
+  setSatelliteTrails(on: boolean) {
+    this.trailsOn = on;
+    this.applySatelliteFilter();
   }
 
   setSatellitesVisible(show: boolean) {
     this.satellites.show = show;
+    this.satTrails.show = show;
+    this.satLabels.show = show;
     if (show) this.startSatelliteClock();
     else this.stopSatelliteClock();
     this.render();
@@ -610,7 +860,7 @@ export class GlobeEngine {
 
   private startSatelliteClock() {
     if (this.satelliteTimer !== null) return;
-    this.satelliteTimer = window.setInterval(() => this.tickSatellites(), 1000);
+    this.satelliteTimer = window.setInterval(() => this.keyframe(), 1000);
   }
 
   private stopSatelliteClock() {
@@ -618,16 +868,60 @@ export class GlobeEngine {
     this.satelliteTimer = null;
   }
 
-  /** Propagates every visible satellite to now. A few hundred SGP4 calls: about a millisecond. */
-  private tickSatellites() {
-    if (document.hidden || !this.satellites.show) return;
-    const now = new Date();
-    for (const { track, point } of this.satelliteById.values()) {
-      if (!point.show && this.selection?.id !== track.noradId) continue;
-      const s = estimate(track, now);
-      if (s) point.position = new Cartesian3(...s.ecef);
-      else point.show = false;
+  private selectedSatelliteId() {
+    return this.selection?.kind === "satellite" ? this.selection.id : null;
+  }
+
+  private interpScratch = new Cartesian3();
+
+  /** Places every satellite between its two keyframes; cheap enough for every frame. */
+  private interpolateSatellites() {
+    const f = Math.min(1.25, Math.max(0, (Date.now() - this.keyT0) / 1000));
+    const selected = this.selectedSatelliteId();
+    for (const entry of this.satelliteById.values()) {
+      if (!entry.valid) continue;
+      if (!entry.point.show && entry.track.noradId !== selected) continue;
+      Cartesian3.lerp(entry.a, entry.b, f, entry.current);
+      entry.point.position = entry.current;
+      if (entry.label) entry.label.position = entry.current;
     }
+  }
+
+  /**
+   * Once a second: a fresh SGP4 keyframe one second ahead for every shown satellite (a few
+   * hundred calls, about a millisecond), and the trail grows by a sample every 15 s.
+   */
+  private keyframe() {
+    if (document.hidden || !this.satellites.show) return;
+    this.interpolateSatellites();
+    const now = Date.now();
+    const ahead = new Date(now + 1000);
+    const selected = this.selectedSatelliteId();
+    for (const entry of this.satelliteById.values()) {
+      if (!entry.valid) continue;
+      const visible = entry.point.show || entry.track.noradId === selected;
+      if (!visible && !entry.trail.show) continue;
+      Cartesian3.clone(entry.current, entry.a);
+      const next = estimate(entry.track, ahead);
+      if (!next) {
+        entry.valid = false;
+        entry.point.show = false;
+        entry.trail.show = false;
+        if (entry.label) entry.label.show = false;
+        continue;
+      }
+      entry.b.x = next.ecef[0];
+      entry.b.y = next.ecef[1];
+      entry.b.z = next.ecef[2];
+      if (now - entry.lastHistory >= TRAIL_STEP_MS) {
+        entry.history.push(Cartesian3.clone(entry.current));
+        if (entry.history.length > TRAIL_SAMPLES) entry.history.shift();
+        entry.lastHistory = now;
+      }
+      if (entry.trail.show) entry.trail.positions = [...entry.history, Cartesian3.clone(entry.current)];
+    }
+    this.keyT0 = now;
+    this.interpolateSatellites();
     this.render();
   }
 
@@ -636,11 +930,93 @@ export class GlobeEngine {
     return entry ? estimate(entry.track, at) : null;
   }
 
+  /* ─────────────────────── Following a satellite ─────────────────────── */
+
+  /**
+   * Flies out beside the satellite (aimed at where it will be when the flight lands), then
+   * hands the camera to Cesium's entity tracking so it keeps following, and the visitor can
+   * still orbit and zoom around it.
+   */
+  private followSatellite(id: number) {
+    const entry = this.satelliteById.get(id);
+    if (!entry) return;
+    this.stopTracking();
+    const duration = this.options.reducedMotion ? 0 : 2.4;
+    const at = estimate(entry.track, new Date(Date.now() + duration * 1000));
+    if (!at) return;
+    const altitude = at.altitudeKm * 1000;
+    const range = Math.min(12_000_000, Math.max(900_000, altitude * 3));
+    const pitch = CesiumMath.toRadians(-22);
+
+    const current = entry.current;
+    const entity = this.widget.entities.add({
+      position: new CallbackPositionProperty((_time, result) => Cartesian3.clone(current, result), false),
+      billboard: { image: satelliteMarker(), width: 30, height: 30 },
+      trackingReferenceFrame: TrackingReferenceFrame.ENU,
+      // Same offset the flight ends at (south of and above the satellite, in its east-north-up frame).
+      viewFrom: new Cartesian3(0, -range * Math.cos(pitch), -range * Math.sin(pitch)),
+    });
+    this.tracked = entity;
+    this.applySatelliteFilter();
+
+    const startFollowing = () => {
+      this.endFlight();
+      if (this.tracked !== entity) return;
+      this.widget.trackedEntity = entity;
+    };
+    if (duration === 0) {
+      startFollowing();
+      return;
+    }
+    this.flying = true;
+    this.lastFlightSeconds = duration;
+    this.widget.scene.camera.flyToBoundingSphere(new BoundingSphere(new Cartesian3(...at.ecef), 1), {
+      offset: new HeadingPitchRange(0, pitch, range),
+      duration,
+      easingFunction: EasingFunction.CUBIC_IN_OUT,
+      complete: startFollowing,
+      cancel: () => this.endFlight(),
+    });
+  }
+
+  private stopTracking() {
+    if (!this.tracked) return;
+    this.widget.trackedEntity = undefined;
+    this.widget.entities.remove(this.tracked);
+    this.tracked = null;
+    this.widget.scene.camera.lookAtTransform(Matrix4.IDENTITY);
+    this.applySatelliteFilter();
+  }
+
+  /** After following a satellite, glide back out to a whole-globe view over the same place. */
+  private returnToGlobe() {
+    const carto = this.widget.scene.camera.positionCartographic;
+    const destination = Cartesian3.fromRadians(carto.longitude, Math.max(-1.1, Math.min(1.1, carto.latitude)), this.homeHeight());
+    if (this.options.reducedMotion) {
+      this.widget.scene.camera.setView({ destination });
+      return;
+    }
+    this.flying = true;
+    this.widget.scene.camera.flyTo({
+      destination,
+      duration: 1.8,
+      easingFunction: EasingFunction.CUBIC_IN_OUT,
+      complete: () => this.endFlight(),
+      cancel: () => this.endFlight(),
+    });
+  }
+
   /* ───────────────────────────── Selection ───────────────────────────── */
 
   select(selection: Selection | null, fly = true) {
+    const wasFollowing = this.tracked !== null;
+    if (wasFollowing && !(selection?.kind === "satellite")) {
+      this.stopTracking();
+      if (!selection) this.returnToGlobe();
+    }
     this.selection = selection;
     this.lastFlightSeconds = 0;
+    this.lastInteraction = Date.now();
     this.clearSelectionPaths();
     this.highlight();
     this.decorateSelection();
@@ -665,7 +1041,7 @@ export class GlobeEngine {
     for (const [id, { point }] of this.satelliteById) {
       const isSelected = this.selection?.kind === "satellite" && this.selection.id === id;
       point.color = isSelected ? selColor : satColor;
-      point.pixelSize = isSelected ? 9 : 4.5;
+      point.pixelSize = isSelected ? 9 : 5;
     }
   }
 
@@ -718,8 +1094,8 @@ export class GlobeEngine {
       case "aircraft":
         return this.aircraftById.get(sel.id)?.billboard.position ?? null;
       case "satellite": {
-        const p = this.satelliteById.get(sel.id)?.point;
-        return p && !Cartesian3.equals(p.position, Cartesian3.ZERO) ? p.position : null;
+        const entry = this.satelliteById.get(sel.id);
+        return entry?.valid ? entry.current : null;
       }
       case "place":
         return Cartesian3.fromDegrees(sel.lon, sel.lat, 0);
@@ -759,10 +1135,13 @@ export class GlobeEngine {
     if (this.options.reducedMotion) {
       camera.setView({ destination });
     } else {
+      this.flying = true;
       camera.flyTo({
         destination,
         duration: 1.6,
         easingFunction: EasingFunction.CUBIC_IN_OUT,
+        complete: () => this.endFlight(),
+        cancel: () => this.endFlight(),
       });
       this.lastFlightSeconds = 1.6;
     }
@@ -782,11 +1161,9 @@ export class GlobeEngine {
         if (r) this.flyTo(r[3], r[4], Math.min(height, 900_000));
         break;
       }
-      case "satellite": {
-        const s = this.satelliteState(sel.id);
-        if (s) this.flyTo(s.lon, s.lat, Math.max(s.altitudeKm * 1000 * 3.2, 9_000_000));
+      case "satellite":
+        this.followSatellite(sel.id);
         break;
-      }
       case "place":
         break;
     }
@@ -810,27 +1187,45 @@ export class GlobeEngine {
     return radius / Math.sin(angular) - radius;
   }
 
-  home(animate = true) {
+  private homeDestination(distanceFactor: number) {
     // Sub-solar longitude from the current UTC time; look 68 degrees east of it so day, the
     // terminator and night (with city lights) share the opening view.
     const now = new Date();
     const hours = now.getUTCHours() + now.getUTCMinutes() / 60;
     const subsolar = -(hours - 12) * 15;
     const lon = ((subsolar + 68 + 540) % 360) - 180;
-    const destination = Cartesian3.fromDegrees(lon, 18, this.homeHeight());
+    return Cartesian3.fromDegrees(lon, 18, this.homeHeight() * distanceFactor);
+  }
+
+  home(animate = true, distanceFactor = 1) {
+    if (this.tracked) this.stopTracking();
+    const destination = this.homeDestination(distanceFactor);
     if (animate && !this.options.reducedMotion) {
-      this.widget.scene.camera.flyTo({ destination, duration: 1.4, easingFunction: EasingFunction.CUBIC_IN_OUT });
+      this.flying = true;
+      this.widget.scene.camera.flyTo({
+        destination,
+        duration: 1.6,
+        easingFunction: EasingFunction.CUBIC_IN_OUT,
+        complete: () => this.endFlight(),
+        cancel: () => this.endFlight(),
+      });
     } else {
       this.widget.scene.camera.setView({ destination });
     }
     this.render();
   }
 
+  /** Zoom buttons glide: the step is spent over a few frames instead of jumping. */
   zoom(direction: 1 | -1) {
     const camera = this.widget.scene.camera;
-    const amount = camera.positionCartographic.height * 0.35;
-    if (direction > 0) camera.zoomIn(amount);
-    else camera.zoomOut(amount);
+    const amount = camera.positionCartographic.height * 0.4;
+    this.lastInteraction = Date.now();
+    if (this.options.reducedMotion) {
+      if (direction > 0) camera.zoomIn(amount);
+      else camera.zoomOut(amount);
+    } else {
+      this.zoomRemaining += direction > 0 ? amount : -amount;
+    }
     this.render();
   }
 
@@ -886,6 +1281,7 @@ export class GlobeEngine {
 
   destroy() {
     this.destroyed = true;
+    this.stopTracking();
     this.stopSatelliteClock();
     if (this.lightingTimer !== null) window.clearInterval(this.lightingTimer);
     this.handler.destroy();

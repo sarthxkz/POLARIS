@@ -13,11 +13,13 @@ interface GlobeProps {
 
 /**
  * Mounts the Cesium globe once. Everything after mount goes through the engine's methods, so
- * React re-renders never touch the WebGL scene.
+ * React re-renders never touch the WebGL scene. The canvas stays hidden until its first imagery
+ * has drawn, then fades in while the camera makes its one-time arrival.
  */
 export default function Globe({ reducedMotion, lowPower, onReady }: GlobeProps) {
   const container = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState<string | null>(null);
+  const [shown, setShown] = useState(false);
   const ready = useRef(onReady);
   useEffect(() => {
     ready.current = onReady;
@@ -29,6 +31,13 @@ export default function Globe({ reducedMotion, lowPower, onReady }: GlobeProps) 
     let engine: GlobeEngine | null = null;
     try {
       engine = new GlobeEngine(el, { reducedMotion, lowPower });
+      const created = engine;
+      created.setHandlers({
+        onFirstTiles: () => {
+          setShown(true);
+          created.intro();
+        },
+      });
       ready.current(engine);
     } catch (error) {
       console.error(error);
@@ -52,7 +61,13 @@ export default function Globe({ reducedMotion, lowPower, onReady }: GlobeProps) 
 
   return (
     <div className="absolute inset-0">
-      <div ref={container} className="absolute inset-0" aria-label="Interactive 3D globe" role="application" />
+      <div
+        ref={container}
+        className="absolute inset-0 transition-opacity duration-[900ms] ease-[var(--ease-out)]"
+        style={{ opacity: shown ? 1 : 0 }}
+        aria-label="Interactive 3D globe"
+        role="application"
+      />
       {failed && (
         <div className="absolute inset-0 grid place-items-center p-6">
           <div className="max-w-sm text-center">

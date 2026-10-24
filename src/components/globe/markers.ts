@@ -62,6 +62,18 @@ export function aircraftMarker(variant: "air" | "selected") {
   });
 }
 
+/** The followed satellite: a dark disc with a cyan ring and the satellite glyph, readable on Earth or space. */
+export function satelliteMarker() {
+  return memo("satellite:selected", () =>
+    svgUrl(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56">` +
+        `<circle cx="28" cy="28" r="24" fill="${GROUND}" fill-opacity="0.78" stroke="${DATA.selected}" stroke-width="2.5"/>` +
+        `<g transform="translate(14 14) scale(1.1666)" fill="none" stroke="${DATA.selected}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${GLYPHS.satellite}</g>` +
+        `</svg>`,
+    ),
+  );
+}
+
 export function eventImage(category: EventCategory, magnitude: number | null, closed: boolean) {
   if (category === "earthquakes") return { image: quakeMarker(magnitude), size: quakeSize(magnitude) };
   return { image: eventMarker(category, closed ? "closed" : "default"), size: 22 };

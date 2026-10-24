@@ -1,0 +1,544 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-23T22:09:14.786Z",
+  "title": "Design System: POLARIS",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Midnight Ground",
+        "canonical": "oklch(12.7% 0.014 254)",
+        "tonalRamp": [
+          "#070c11",
+          "#1f242b",
+          "#3b4047",
+          "#585e66",
+          "#787e86",
+          "#999fa7",
+          "#bec5cd",
+          "#e8eff8"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Graphite Navy Surface",
+        "canonical": "oklch(17.2% 0.021 258)",
+        "tonalRamp": [
+          "#060b14",
+          "#1e242e",
+          "#39404b",
+          "#565e6a",
+          "#767e8a",
+          "#979fac",
+          "#bcc5d2",
+          "#e6effd"
+        ]
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Raised",
+        "canonical": "oklch(21.5% 0.027 256)",
+        "tonalRamp": [
+          "#040b16",
+          "#1b2531",
+          "#36414e",
+          "#545f6d",
+          "#737e8e",
+          "#94a0b0",
+          "#b9c5d6",
+          "#e3f0ff"
+        ]
+      },
+      "hover": {
+        "role": "neutral",
+        "displayName": "Hover",
+        "canonical": "oklch(24.9% 0.033 256)",
+        "tonalRamp": [
+          "#030b19",
+          "#1a2534",
+          "#354151",
+          "#525f70",
+          "#717e91",
+          "#92a0b3",
+          "#b7c5da",
+          "#e1f0ff"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(26.6% 0.032 256)",
+        "tonalRamp": [
+          "#030b18",
+          "#1a2534",
+          "#354151",
+          "#525f70",
+          "#717e91",
+          "#92a0b3",
+          "#b7c5d9",
+          "#e1f0ff"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "oklch(34.0% 0.041 256)",
+        "tonalRamp": [
+          "#020b1c",
+          "#162537",
+          "#314155",
+          "#4f5f75",
+          "#6e7f96",
+          "#8ea0b8",
+          "#b3c6df",
+          "#ddf0ff"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(95.0% 0.013 256)",
+        "tonalRamp": [
+          "#080b10",
+          "#20242a",
+          "#3b4046",
+          "#595e65",
+          "#787e85",
+          "#999fa6",
+          "#bfc5cc",
+          "#e9eff7"
+        ]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Soft Ink",
+        "canonical": "oklch(75.6% 0.032 256)",
+        "tonalRamp": [
+          "#040b18",
+          "#1a2533",
+          "#354150",
+          "#525f70",
+          "#717e90",
+          "#92a0b2",
+          "#b7c5d9",
+          "#e1f0ff"
+        ]
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Faint Ink",
+        "canonical": "oklch(63.5% 0.036 257)",
+        "tonalRamp": [
+          "#030b1a",
+          "#182535",
+          "#334153",
+          "#515f72",
+          "#707e93",
+          "#90a0b5",
+          "#b6c6dc",
+          "#dff0ff"
+        ]
+      },
+      "cyan": {
+        "role": "primary",
+        "displayName": "Selection Cyan",
+        "canonical": "oklch(80.8% 0.119 217)",
+        "tonalRamp": [
+          "#00102b",
+          "#002e48",
+          "#004c68",
+          "#006c89",
+          "#008dab",
+          "#1fb0ce",
+          "#57d7f6",
+          "#86ffff"
+        ]
+      },
+      "cyan-deep": {
+        "role": "primary",
+        "displayName": "Abyss Cyan",
+        "canonical": "oklch(31.3% 0.052 229)",
+        "tonalRamp": [
+          "#000e1c",
+          "#002838",
+          "#1f4556",
+          "#3d6475",
+          "#5c8496",
+          "#7da5b8",
+          "#a2cbdf",
+          "#cbf6ff"
+        ]
+      },
+      "glacier": {
+        "role": "secondary",
+        "displayName": "Glacier Estimate Blue",
+        "canonical": "oklch(79.9% 0.090 248)",
+        "tonalRamp": [
+          "#00082e",
+          "#00254c",
+          "#0d426c",
+          "#30618e",
+          "#5082b0",
+          "#71a3d4",
+          "#95cafc",
+          "#bff5ff"
+        ]
+      },
+      "amber": {
+        "role": "tertiary",
+        "displayName": "Heat Amber",
+        "canonical": "oklch(80.5% 0.138 76)",
+        "tonalRamp": [
+          "#260000",
+          "#470e00",
+          "#672f00",
+          "#884e00",
+          "#ab6f00",
+          "#cf9121",
+          "#f7b751",
+          "#ffe17e"
+        ]
+      },
+      "frost": {
+        "role": "tertiary",
+        "displayName": "Water and Ice Frost",
+        "canonical": "oklch(92.6% 0.022 250)",
+        "tonalRamp": [
+          "#050c14",
+          "#1c252e",
+          "#37414b",
+          "#555f6a",
+          "#747f8a",
+          "#95a0ac",
+          "#bac6d2",
+          "#e4f0fd"
+        ]
+      },
+      "coral": {
+        "role": "tertiary",
+        "displayName": "Quake Coral",
+        "canonical": "oklch(75.9% 0.144 30)",
+        "tonalRamp": [
+          "#310000",
+          "#560000",
+          "#7a0b02",
+          "#9f3426",
+          "#c45646",
+          "#ea7866",
+          "#ff9e8b",
+          "#ffc9b4"
+        ]
+      },
+      "red": {
+        "role": "tertiary",
+        "displayName": "Critical Red",
+        "canonical": "oklch(69.2% 0.198 24)",
+        "tonalRamp": [
+          "#370000",
+          "#600000",
+          "#8a0000",
+          "#b3001e",
+          "#da393f",
+          "#ff605f",
+          "#ff8a86",
+          "#ffbbb4"
+        ]
+      },
+      "sand": {
+        "role": "tertiary",
+        "displayName": "Sand",
+        "canonical": "oklch(78.6% 0.062 82)",
+        "tonalRamp": [
+          "#170700",
+          "#332000",
+          "#503c14",
+          "#6f5a33",
+          "#907a52",
+          "#b29b72",
+          "#d8c197",
+          "#ffebc0"
+        ]
+      },
+      "aircraft": {
+        "role": "tertiary",
+        "displayName": "Aircraft Grey",
+        "canonical": "oklch(87.1% 0.026 254)",
+        "tonalRamp": [
+          "#040c16",
+          "#1b2531",
+          "#36414e",
+          "#535f6c",
+          "#737e8d",
+          "#93a0af",
+          "#b9c5d5",
+          "#e3f0ff"
+        ]
+      },
+      "open-space-field": {
+        "role": "neutral",
+        "displayName": "Open-Space Field (accepted exception)",
+        "canonical": "#040404",
+        "note": "Not a CSS token. Sampled from Cesium's real star-catalogue skybox around the globe (near-neutral black with stars). Accepted in the finish review; panels and read pages carry ground #04070c. Do not tint or replace the skybox.",
+        "tonalRamp": []
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Read-page hero headline only, two lines, each rising once from behind its baseline."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Read-page section titles."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "The selected object's name in the details panel."
+      },
+      "body-read": {
+        "displayName": "Body Read",
+        "purpose": "Read-page paragraphs and hero sentence in a 560px column."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All Explorer chrome text, list rows, search."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Panel and rail section heads, detail sub-heads."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Metadata, ages, sources, segment and group labels in faint ink."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Tagline under the wordmark, search hints, imagery credits."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The word POLARIS beside the mark; the only tracked text."
+      }
+    },
+    "shadows": [
+      {
+        "name": "popover",
+        "value": "0 16px 40px rgba(0,0,0,0.55)",
+        "purpose": "Menus floating off the top bar: search results, data feeds, display options."
+      },
+      {
+        "name": "hover-tag",
+        "value": "0 6px 20px rgba(0,0,0,0.45)",
+        "purpose": "Pointer-following label over a globe object."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "Default for entrances, press, panel and swap animations."
+      },
+      {
+        "name": "ease-in-out",
+        "value": "cubic-bezier(0.77, 0, 0.175, 1)",
+        "purpose": "Strong in-out for travel."
+      },
+      {
+        "name": "ease-drawer",
+        "value": "cubic-bezier(0.32, 0.72, 0, 1)",
+        "purpose": "Mobile bottom sheet."
+      },
+      {
+        "name": "press",
+        "value": "transform 140ms ease-out to scale(0.96); colours 150ms",
+        "purpose": "Every pressable control; scale removed under reduced motion."
+      },
+      {
+        "name": "panel-in",
+        "value": "220ms ease-out from opacity 0, translateX(12px)",
+        "purpose": "Panels arriving on demand."
+      },
+      {
+        "name": "swap-in",
+        "value": "180ms ease-out from opacity 0, blur(2px)",
+        "purpose": "Feed-to-details crossfade inside the side panel."
+      },
+      {
+        "name": "ring-draw",
+        "value": "520ms stroke-dashoffset",
+        "purpose": "The cyan selection ring draws once."
+      },
+      {
+        "name": "camera-fly",
+        "value": "1.4-1.6s cubic in-out",
+        "purpose": "Camera travel to a selected object."
+      },
+      {
+        "name": "line-rise",
+        "value": "900ms ease-out, second line +110ms",
+        "purpose": "Read-page headline lines rise once."
+      },
+      {
+        "name": "fade-up",
+        "value": "600ms ease-out, 260ms delay, from translateY(8px)",
+        "purpose": "Read-page hero sentence and action."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "fade 160-200ms",
+        "purpose": "Replaces all entrances when prefers-reduced-motion is set."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ink-filled single action per view on read pages and the site header.",
+      "html": "<a class=\"ds-btn-primary\" href=\"#\">See them on the globe</a>",
+      "css": ".ds-btn-primary { display: inline-block; font-family: var(--font-sans, 'Work Sans', ui-sans-serif, system-ui, sans-serif); background: var(--color-ink, #e9eff7); color: var(--color-ground, #04070c); padding: 10px 16px; border-radius: 6px; font-size: 15px; font-weight: 500; text-decoration: none; transition: transform 140ms cubic-bezier(0.23,1,0.32,1), background-color 150ms ease; } .ds-btn-primary:hover { background: #ffffff; } .ds-btn-primary:active { transform: scale(0.96); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-cyan, #52d3f2); outline-offset: 2px; }"
+    },
+    {
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "icon-button",
+      "description": "36px quiet control in panels and the top bar.",
+      "html": "<button class=\"ds-icon-btn\" aria-label=\"Zoom in\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"/><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/></svg></button>",
+      "css": ".ds-icon-btn { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 6px; background: transparent; color: var(--color-ink-soft, #a3b1c4); cursor: pointer; transition: transform 140ms cubic-bezier(0.23,1,0.32,1), background-color 150ms ease, color 150ms ease; } .ds-icon-btn:hover { background: var(--color-hover, #172231); color: var(--color-ink, #e9eff7); } .ds-icon-btn:active { transform: scale(0.96); } .ds-icon-btn:focus-visible { outline: 2px solid var(--color-cyan, #52d3f2); outline-offset: 2px; }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "chip",
+      "refersTo": "segment",
+      "description": "Time window, altitude band and sort; the selected segment fills raised.",
+      "html": "<div class=\"ds-seg\" role=\"radiogroup\"><button role=\"radio\" aria-checked=\"false\">24 h</button><button role=\"radio\" aria-checked=\"false\">3 days</button><button role=\"radio\" aria-checked=\"true\">7 days</button><button role=\"radio\" aria-checked=\"false\">14 days</button></div>",
+      "css": ".ds-seg { display: flex; gap: 4px; background: var(--color-surface, #0a1019); padding: 8px; } .ds-seg button { flex: 1; font-family: var(--font-sans, 'Work Sans', ui-sans-serif, system-ui, sans-serif); font-size: 12px; line-height: 16px; padding: 4px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--color-ink-faint, #7d8ca1); cursor: pointer; transition: color 150ms ease, background-color 150ms ease; } .ds-seg button:hover { color: var(--color-ink-soft, #a3b1c4); } .ds-seg button[aria-checked=\"true\"] { background: var(--color-raised, #111a26); color: var(--color-ink, #e9eff7); } .ds-seg button:focus-visible { outline: 2px solid var(--color-cyan, #52d3f2); outline-offset: 2px; }"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "The Explorer's primary action, top centre, 440px.",
+      "html": "<label class=\"ds-search\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"/></svg><input placeholder=\"Search a place, coordinates, satellite or flight\"></label>",
+      "css": ".ds-search { display: flex; align-items: center; gap: 8px; width: 440px; max-width: 100%; height: 36px; padding: 0 10px; border: 1px solid var(--color-line, #1b2635); border-radius: 6px; background: var(--color-surface, #0a1019); color: var(--color-ink-faint, #7d8ca1); transition: border-color 150ms ease; } .ds-search:focus-within { border-color: var(--color-line-strong, #2a394d); } .ds-search input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-family: var(--font-sans, 'Work Sans', ui-sans-serif, system-ui, sans-serif); font-size: 14px; color: var(--color-ink, #e9eff7); } .ds-search input::placeholder { color: var(--color-ink-faint, #7d8ca1); }"
+    },
+    {
+      "name": "Layer Rail Section",
+      "kind": "card",
+      "refersTo": "instrument-panel",
+      "description": "Opaque edge-pinned instrument panel with a layer row, count and switch.",
+      "html": "<aside class=\"ds-panel\"><div class=\"ds-panel-head\"><h2>Natural events</h2><span>451</span></div><div class=\"ds-group\">Fire and heat</div><button class=\"ds-layer-row\" role=\"switch\" aria-checked=\"true\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#f2b24c\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z\"/></svg><span class=\"ds-layer-label\">Wildfires</span><span class=\"ds-count\">83</span><span class=\"ds-switch on\"><span></span></span></button></aside>",
+      "css": ".ds-panel { width: 296px; background: var(--color-surface, #0a1019); border: 1px solid var(--color-line, #1b2635); border-radius: 10px; padding-bottom: 12px; font-family: var(--font-sans, 'Work Sans', ui-sans-serif, system-ui, sans-serif); font-size: 14px; color: var(--color-ink, #e9eff7); } .ds-panel-head { display: flex; align-items: center; padding: 14px 14px 8px; } .ds-panel-head h2 { flex: 1; margin: 0; font-size: 13px; font-weight: 500; } .ds-panel-head span { font-size: 12px; color: var(--color-ink-faint, #7d8ca1); font-variant-numeric: tabular-nums; } .ds-group { padding: 6px 14px 4px; font-size: 12px; color: var(--color-ink-faint, #7d8ca1); } .ds-layer-row { display: flex; align-items: center; gap: 10px; width: calc(100% - 12px); margin: 0 6px; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: background-color 150ms ease; } .ds-layer-row:hover { background: var(--color-hover, #172231); } .ds-layer-row:focus-visible { outline: 2px solid var(--color-cyan, #52d3f2); outline-offset: 2px; } .ds-layer-label { flex: 1; } .ds-count { font-size: 13px; color: var(--color-ink-soft, #a3b1c4); font-variant-numeric: tabular-nums; } .ds-switch { position: relative; display: inline-flex; width: 30px; height: 18px; border-radius: 9999px; border: 1px solid var(--color-line-strong, #2a394d); } .ds-switch span { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 9999px; background: var(--color-ink-faint, #7d8ca1); transition: transform 200ms cubic-bezier(0.23,1,0.32,1); } .ds-switch.on { background: var(--color-ink-soft, #a3b1c4); border-color: transparent; } .ds-switch.on span { transform: translateX(12px); background: var(--color-ground, #04070c); }"
+    },
+    {
+      "name": "Site Navigation",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Read-page header: wordmark, links in soft ink, current in ink, ink primary at the end.",
+      "html": "<nav class=\"ds-nav\"><span class=\"ds-wordmark\">POLARIS</span><a href=\"#\" aria-current=\"page\">Events</a><a href=\"#\">Satellites</a><a href=\"#\">Sources</a><a href=\"#\">About</a><a class=\"ds-nav-cta\" href=\"#\">Open the globe</a></nav>",
+      "css": ".ds-nav { display: flex; align-items: center; gap: 4px; height: 64px; padding: 0 16px; background: var(--color-ground, #04070c); font-family: var(--font-sans, 'Work Sans', ui-sans-serif, system-ui, sans-serif); } .ds-wordmark { margin-right: auto; font-size: 15px; font-weight: 500; letter-spacing: 0.08em; color: var(--color-ink, #e9eff7); } .ds-nav a { padding: 10px; border-radius: 6px; font-size: 15px; color: var(--color-ink-soft, #a3b1c4); text-decoration: none; transition: color 150ms ease; } .ds-nav a:hover, .ds-nav a[aria-current=\"page\"] { color: var(--color-ink, #e9eff7); } .ds-nav a:focus-visible { outline: 2px solid var(--color-cyan, #52d3f2); outline-offset: 2px; } .ds-nav .ds-nav-cta { margin-left: 8px; padding: 8px 12px; background: var(--color-ink, #e9eff7); color: var(--color-ground, #04070c); font-size: 14px; font-weight: 500; }"
+    },
+    {
+      "name": "Read Row",
+      "kind": "custom",
+      "refersTo": "read-row",
+      "description": "Two-ended list row on read pages: glyph, name and sub-line left, tabular value right, nothing drawn between rows.",
+      "html": "<a class=\"ds-row\" href=\"#\"><span class=\"ds-row-id\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\"><circle cx=\"8\" cy=\"8\" r=\"5.5\" fill=\"#ff5d5d\" fill-opacity=\"0.38\" stroke=\"#ff5d5d\" stroke-width=\"1.5\"/></svg><span><span class=\"ds-row-name\">191 km ENE of Nagqu</span><span class=\"ds-row-sub\">Earthquakes</span></span></span><span class=\"ds-row-val\">M7.0 · 22 Oct, 14:33</span></a>",
+      "css": ".ds-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; min-height: 38px; padding: 8px; border-radius: 6px; text-decoration: none; font-family: var(--font-sans, 'Work Sans', ui-sans-serif, system-ui, sans-serif); background: var(--color-ground, #04070c); transition: background-color 150ms ease; } .ds-row:hover { background: var(--color-raised, #111a26); } .ds-row:focus-visible { outline: 2px solid var(--color-cyan, #52d3f2); outline-offset: 2px; } .ds-row-id { display: flex; gap: 10px; align-items: flex-start; } .ds-row-id svg { margin-top: 4px; flex-shrink: 0; } .ds-row-name { display: block; font-size: 16px; color: var(--color-ink, #e9eff7); } .ds-row-sub { display: block; font-size: 14px; color: var(--color-ink-soft, #a3b1c4); } .ds-row-val { flex-shrink: 0; padding-top: 2px; font-size: 14px; color: var(--color-ink-soft, #a3b1c4); font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Selection Ring",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "Signature mark: a cyan ring that draws itself once around the selected object, on the real star field.",
+      "html": "<div class=\"ds-ring-stage\"><svg width=\"64\" height=\"64\" viewBox=\"0 0 64 64\"><circle cx=\"32\" cy=\"32\" r=\"10\" fill=\"#04070c\" fill-opacity=\"0.82\" stroke=\"#f2b24c\" stroke-width=\"2\"/><circle class=\"ds-ring\" cx=\"32\" cy=\"32\" r=\"22\" fill=\"none\"/></svg></div>",
+      "css": ".ds-ring-stage { display: grid; place-items: center; width: 120px; height: 120px; background: #040404; } .ds-ring { stroke: var(--color-cyan, #52d3f2); stroke-width: 1.75; stroke-linecap: round; stroke-dasharray: 139; stroke-dashoffset: 139; transform: rotate(-90deg); transform-origin: 32px 32px; animation: ds-ring-draw 520ms cubic-bezier(0.23,1,0.32,1) forwards; } @keyframes ds-ring-draw { to { stroke-dashoffset: 0; } } @media (prefers-reduced-motion: reduce) { .ds-ring { animation: none; stroke-dashoffset: 0; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Instrument Over the Real Earth",
+    "overview": "The Earth is the interface. NASA GIBS imagery is the planet's surface (Blue Marble by day, city lights by night, true-colour swaths and cloud infrared as layers), the terminator is real, and the globe runs edge to edge. Everything else is a small set of exact instrument readouts pinned to the window's edges: a top bar, a layer rail, an event feed that the selected object's details replace, and a seven-day timeline. Chrome is opaque graphite-navy on a midnight ground, typed in Work Sans at light-to-medium weights with tabular figures, and it never competes with the planet.\n\nColour belongs to data. Markers carry four hue families plus glacier blue for orbital estimates; cyan exists only for the selected object and keyboard focus. The read pages (Events, Satellites, Sources, About) share the same ground, ink and type but slow down: a split hero with a light display headline on one half and a live working fragment of the product on the other, then a narrow reading column with generous section breaks and two-ended rows with nothing drawn between them.\n\nThe system refuses both the category default (a small boxed globe in a grid of KPI cards) and its opposite (a neon command-centre HUD with scan lines and glowing borders).",
+    "keyCharacteristics": [
+      "Full-bleed lit globe; chrome as opaque edge-pinned instruments, never frosted glass over WebGL.",
+      "Midnight ground, three-step graphite-navy surfaces, cool-white ink in three strengths.",
+      "Data colour in four families plus glacier for estimates; cyan reserved for selection and focus.",
+      "Work Sans 300/400/500, tabular figures on every number, sentence case throughout.",
+      "Hairlines inside panels only; depth from tone, with one shadow reserved for floating popovers.",
+      "The chrome POLARIS mark is the only metallic object."
+    ],
+    "rules": [
+      {
+        "name": "The Colour-Is-Evidence Rule",
+        "section": "colors",
+        "body": "Data colour uses four families only: heat amber, water/ice frost, quake coral rising to critical red at M6+, and sand for everything else. Glacier blue is reserved for satellite estimates. Category inside a family is told apart by its glyph, never by a new hue."
+      },
+      {
+        "name": "The One Cyan Rule",
+        "section": "colors",
+        "body": "Cyan marks the selected object and keyboard focus. It is not a brand accent, not a button fill and not decoration."
+      },
+      {
+        "name": "The Red-Means-Critical Rule",
+        "section": "colors",
+        "body": "Red appears only for M6+ earthquakes, unavailable feeds and errors."
+      },
+      {
+        "name": "The Tabular Truth Rule",
+        "section": "typography",
+        "body": "Every count, time, coordinate, magnitude and age is set in tabular figures, usually paired with its unit or \"UTC\" in faint ink."
+      },
+      {
+        "name": "The Sentence Case Rule",
+        "section": "typography",
+        "body": "Labels, group heads and buttons are sentence case at normal tracking. Tracked capitals belong to the POLARIS wordmark alone."
+      },
+      {
+        "name": "The Opaque Instrument Rule",
+        "section": "elevation",
+        "body": "Panels over the globe are solid surface with a hairline border, never frosted, never glowing."
+      },
+      {
+        "name": "The Shadow-Only-Floats Rule",
+        "section": "elevation",
+        "body": "Only transient popovers and the hover tag cast shadows; docked panels and read pages are flat."
+      }
+    ],
+    "dos": [
+      "**Do** let the globe own the viewport and pin chrome to the edges as opaque `surface` panels with a 1px `line` border.",
+      "**Do** colour data from the four families (amber, frost, coral to red at M6+, sand) and glacier for satellite estimates; distinguish categories within a family by glyph.",
+      "**Do** keep cyan for the selected object and keyboard focus.",
+      "**Do** set every number in tabular figures with its time, unit or source beside it in faint ink.",
+      "**Do** leave the open-space field as Cesium's real star skybox (about #040404) while panels and read pages sit on `ground`.",
+      "**Do** honour `prefers-reduced-motion`: entrances become a 160-200ms fade and press scaling stops.",
+      "**Do** give read-page heroes a live working fragment of the product, never a picture of it."
+    ],
+    "donts": [
+      "**Don't** blur or frost panels over the WebGL globe.",
+      "**Don't** add a new hue for a new event category, or use red for anything but critical states.",
+      "**Don't** use cyan as a button fill, brand accent or decoration.",
+      "**Don't** add scan lines, glowing borders or HUD brackets; this is an instrument, not a command centre.",
+      "**Don't** box the globe into a card grid of KPI tiles.",
+      "**Don't** put chrome or metallic sheen anywhere except the POLARIS mark.",
+      "**Don't** add tracked uppercase labels or eyebrows above headings."
+    ]
+  }
+}

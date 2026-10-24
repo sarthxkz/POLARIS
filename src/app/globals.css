@@ -1,0 +1,228 @@
+@import "tailwindcss";
+
+/*
+ * POLARIS visual system.
+ * Midnight ground, opaque graphite-navy surfaces (no blur over the WebGL globe), cool-white ink.
+ * Colour belongs to data: cyan marks the selected object and the one primary action; glacier is
+ * orbital estimates; amber is heat, fire and stale feeds; red is critical only.
+ */
+@theme {
+  --font-sans: var(--font-work-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --color-ground: #04070c;
+  --color-surface: #0a1019;
+  --color-raised: #111a26;
+  --color-hover: #172231;
+  --color-line: #1b2635;
+  --color-line-strong: #2a394d;
+
+  --color-ink: #e9eff7;
+  --color-ink-soft: #a3b1c4;
+  --color-ink-faint: #7d8ca1;
+
+  --color-cyan: #52d3f2;
+  --color-cyan-deep: #0e3646;
+  --color-glacier: #8fc3f5;
+  --color-amber: #f2b24c;
+  --color-coral: #ff8b78;
+  --color-red: #ff5d5d;
+  --color-sand: #cdb68c;
+  --color-frost: #dce8f5;
+
+  --radius-control: 6px;
+  --radius-panel: 10px;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+}
+
+:root {
+  color-scheme: dark;
+  --rail-w: 296px;
+  --panel-w: 368px;
+  --bar-h: 56px;
+  --timeline-h: 88px;
+}
+
+html {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: var(--color-ground);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.43;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+::selection {
+  background: var(--color-cyan-deep);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+
+a {
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Cesium's own chrome: credits must stay visible (imagery attribution), styled to the system. */
+.cesium-widget-credits {
+  font-family: var(--font-sans) !important;
+  font-size: 11px !important;
+  color: var(--color-ink-faint) !important;
+}
+.cesium-widget-credits a {
+  color: var(--color-ink-soft) !important;
+}
+.cesium-credit-logoContainer {
+  display: none !important;
+}
+.cesium-widget,
+.cesium-widget canvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+.cesium-widget canvas:focus {
+  outline: none;
+}
+
+/* Pressable controls: instant, tactile, never animated on the keyboard path. */
+.press {
+  transition:
+    transform 140ms var(--ease-out),
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
+}
+.press:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+/* Panels arriving on demand (detail panel, sheets): enter from their edge, exit softer. */
+.panel-enter {
+  animation: panel-in 220ms var(--ease-out) both;
+}
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+/* Content swapping inside a panel (feed to details and back): a short blur crossfade. */
+.swap-in {
+  animation: swap-in 180ms var(--ease-out) both;
+}
+@keyframes swap-in {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+}
+
+/* Loading placeholders: flat bars at the value's real size, no shimmer. */
+.skeleton {
+  background: var(--color-raised);
+  border-radius: 3px;
+}
+
+/* The selected object's ring draws once around it (SVG stroke). */
+@keyframes ring-draw {
+  from {
+    stroke-dashoffset: var(--ring-len);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Read pages: each headline line rises from behind its own baseline, once. */
+.mask-line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+}
+.mask-line > span {
+  display: block;
+  animation: line-rise 900ms var(--ease-out) both;
+}
+.mask-line:nth-child(2) > span {
+  animation-delay: 110ms;
+}
+.fade-up {
+  animation: fade-up 600ms var(--ease-out) 260ms both;
+}
+@keyframes line-rise {
+  from {
+    transform: translateY(105%);
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-enter,
+  .swap-in,
+  .fade-up {
+    animation: fade 160ms ease both;
+  }
+  .mask-line > span {
+    animation: fade 200ms ease both;
+  }
+  .press:active:not(:disabled) {
+    transform: none;
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* On phones the layer rail renders inside the bottom sheet instead of floating. */
+.mobile-rail > aside {
+  position: static;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  animation: none;
+}

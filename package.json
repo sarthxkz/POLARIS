@@ -1,0 +1,44 @@
+{
+  "name": "polaris",
+  "version": "0.1.0",
+  "private": true,
+  "description": "POLARIS â€” World Intelligence System. Public Earth-observation data on a 3D globe.",
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "postinstall": "node scripts/copy-cesium-assets.mjs",
+    "predev": "node scripts/copy-cesium-assets.mjs --if-missing",
+    "dev": "next dev",
+    "prebuild": "node scripts/copy-cesium-assets.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "cesium": "^1.146.0",
+    "lucide-react": "^1.61.0",
+    "next": "^16.4.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "satellite.js": "^7.1.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.64.1",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.3",
+    "server-only": "^0.0.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.5"
+  }
+}

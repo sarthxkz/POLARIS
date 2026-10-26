@@ -1,0 +1,10 @@
+# Imported by Vybe's Caddyfile (deploy/sites/*.caddy on the VM). Caddy gets and renews the
+# certificate itself once DNS for polaris.sarthxkz.in points at 161.153.37.106.
+polaris.sarthxkz.in {
+	encode zstd gzip
+	header -Server
+	reverse_proxy polaris:3000 {
+		# The app rate-limits per visitor using this header.
+		header_up X-Real-IP {remote_host}
+	}
+}

@@ -23,7 +23,7 @@ export default async function SatellitesPage() {
   return (
     <>
       <SiteHeader current="/satellites" />
-      <main>
+      <main id="main" tabIndex={-1} className="outline-none">
         <PageHero
           lines={["Satellites overhead,", "estimated every second"]}
           sentence={

@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Minus, Pause, Play, Plus } from "lucide-react";
+import { Home, Minus, Pause, Play, Plus, Sun } from "lucide-react";
 import type { GlobeEngine } from "@/components/globe/engine";
 
 export function GlobeControls({
@@ -8,12 +8,14 @@ export function GlobeControls({
   rotate,
   setRotate,
   besidePanel,
+  onFaceSun,
 }: {
   engine: GlobeEngine | null;
   rotate: boolean;
   /** Absent when the device asks for reduced motion: then there is no rotation to control. */
   setRotate?: (on: boolean) => void;
   besidePanel: boolean;
+  onFaceSun: () => void;
 }) {
   const button =
     "press grid size-9 place-items-center text-ink-soft hover:bg-hover hover:text-ink disabled:opacity-40";
@@ -41,6 +43,16 @@ export function GlobeControls({
       </button>
       <button type="button" aria-label="Zoom out" title="Zoom out" className={button} disabled={!engine} onClick={() => engine?.zoom(-1)}>
         <Minus size={16} strokeWidth={1.5} />
+      </button>
+      <button
+        type="button"
+        aria-label="Face the Sun"
+        title="Face the Sun"
+        className={`${button} border-t border-line`}
+        disabled={!engine}
+        onClick={onFaceSun}
+      >
+        <Sun size={15} strokeWidth={1.5} />
       </button>
       <button
         type="button"

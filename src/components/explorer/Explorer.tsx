@@ -40,7 +40,7 @@ export function Explorer() {
   const [lowPower, setLowPower] = useState(() => {
     if (typeof navigator === "undefined") return false;
     const memory = (navigator as { deviceMemory?: number }).deviceMemory ?? 8;
-    return (navigator.hardwareConcurrency ?? 8) <= 4 || memory <= 4;
+    return (navigator.hardwareConcurrency ?? 8) <= 2 || memory <= 2;
   });
   const [engine, setEngine] = useState<GlobeEngine | null>(null);
   const [layers, setLayers] = useState<LayerState>(DEFAULT_LAYERS);
@@ -72,6 +72,8 @@ export function Explorer() {
       /* preference only */
     }
   }, []);
+  // The resting sentence describes the whole planet, so it steps aside when the camera is close.
+  const [cameraFar, setCameraFar] = useState(true);
   const [hover, setHover] = useState<(PickInfo & { x: number; y: number }) | null>(null);
 
   const events = usePolled<EventsData>("/api/events?days=14", 120_000);
@@ -105,6 +107,7 @@ export function Explorer() {
         setSelection(s);
       },
       onHover: setHover,
+      onCameraHeight: (metres) => setCameraFar(metres > 9_000_000),
     });
   }, [engine]);
 
@@ -378,7 +381,7 @@ export function Explorer() {
       <SelectionRing engine={engine} selection={selection} reducedMotion={reducedMotion}>
         {selectedTrack && <SatelliteHud key={selectedTrack.noradId} track={selectedTrack} />}
       </SelectionRing>
-      {!railOpen && !selection && cursor === null && (
+      {!railOpen && !selection && cursor === null && cameraFar && (
         <LiveSummary
           aircraft={layers.aircraft ? airborne : null}
           satellites={satellitesShown}
@@ -428,6 +431,10 @@ export function Explorer() {
         rotate={rotate && !reducedMotion}
         setRotate={reducedMotion ? undefined : setRotate}
         besidePanel={feedOpen || selection !== null}
+        onFaceSun={() => {
+          clearSelection();
+          engine?.faceSun();
+        }}
       />
 
       <div className="md:hidden">

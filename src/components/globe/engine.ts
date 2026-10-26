@@ -3,8 +3,13 @@ import {
   BoundingSphere,
   CallbackPositionProperty,
   HeadingPitchRange,
+  Matrix3,
   Matrix4,
+  Quaternion,
+  Simon1994PlanetaryPositions,
+  SunLight,
   TrackingReferenceFrame,
+  Transforms,
   Cartesian2,
   Cartesian3,
   CesiumWidget,
@@ -145,6 +150,12 @@ export class GlobeEngine {
   private zoomRemaining = 0;
   private tracked: Entity | null = null;
   private introPending = true;
+  private firstTilesTimer: number | null = null;
+  /** Set by Face the Sun: idle rotation waits until the visitor touches the globe again. */
+  private holdRotation = false;
+  private sunScratch = new Cartesian3();
+  private sunMatrix = new Matrix3();
+  private aimScratch = [new Cartesian3(), new Cartesian3(), new Cartesian3(), new Cartesian3()];
   private selection: Selection | null = null;
   private selectionPaths: Polyline[] = [];
   private satelliteTimer: number | null = null;
@@ -199,6 +210,7 @@ export class GlobeEngine {
         maximumLevel: 14,
         credit: eoxCredit,
       }),
+      { contrast: 1.08, saturation: 1.12 },
     );
 
     this.widget = new CesiumWidget(container, {
@@ -218,6 +230,9 @@ export class GlobeEngine {
     if (options.lowPower) {
       this.widget.resolutionScale = 0.8;
       this.widget.targetFrameRate = 30;
+    } else {
+      // Full device resolution, capped at 2x: HD on retina screens without a 9-16x pixel load on 3-4x phones.
+      this.widget.resolutionScale = Math.min(1, 2 / (window.devicePixelRatio || 1));
     }
 
     const globe = scene.globe;
@@ -226,9 +241,19 @@ export class GlobeEngine {
     globe.dynamicAtmosphereLighting = true;
     globe.dynamicAtmosphereLightingFromSun = true;
     globe.vertexShadowDarkness = 0.5;
+    globe.lightingFadeOutDistance = 0;
+    globe.lightingFadeInDistance = 1;
+    globe.lambertDiffuseMultiplier = 1.15;
+    scene.light = new SunLight({ intensity: 2.4 });
+    if (scene.sun) {
+      scene.sun.show = true;
+      scene.sun.glowFactor = 2.2;
+    }
+    scene.sunBloom = true;
     globe.showGroundAtmosphere = !options.lowPower;
-    globe.maximumScreenSpaceError = options.lowPower ? 3 : 1.5;
-    globe.tileCacheSize = 200;
+    // A lower screen-space error loads finer tiles sooner: the HD look at every zoom.
+    globe.maximumScreenSpaceError = options.lowPower ? 2.5 : 1;
+    globe.tileCacheSize = options.lowPower ? 200 : 500;
     if (scene.skyAtmosphere) scene.skyAtmosphere.show = true;
     scene.fog.enabled = true;
     scene.backgroundColor = Color.fromCssColorString("#04070c");
@@ -285,6 +310,7 @@ export class GlobeEngine {
     const canvas = this.widget.canvas;
     const note = () => {
       this.lastInteraction = Date.now();
+      this.holdRotation = false;
     };
     canvas.addEventListener("pointerdown", note);
     canvas.addEventListener("wheel", note, { passive: true });
@@ -295,14 +321,14 @@ export class GlobeEngine {
     clock.onTick.addEventListener(() => this.frame());
 
     const onProgress = (queued: number) => {
-      if (queued > 0 || !this.introPending) return;
+      if (queued > 0 || !this.introPending || this.destroyed) return;
       this.introPending = false;
       globe.tileLoadProgressEvent.removeEventListener(onProgress);
       this.onFirstTiles();
     };
     globe.tileLoadProgressEvent.addEventListener(onProgress);
     // A slow network should not keep the globe hidden.
-    window.setTimeout(() => onProgress(0), 4_000);
+    this.firstTilesTimer = window.setTimeout(() => onProgress(0), 4_000);
   }
 
   /* ───────────────────────────── Motion ───────────────────────────── */
@@ -328,8 +354,124 @@ export class GlobeEngine {
     this.render();
   }
 
+  /** Unit vector from the Earth's centre toward the Sun, in the Earth-fixed frame, at the clock's time. */
+  private sunDirection(result: Cartesian3) {
+    const time = this.widget.clock.currentTime;
+    const inertial = Simon1994PlanetaryPositions.computeSunPositionInEarthInertialFrame(time, this.sunScratch);
+    const toFixed =
+      Transforms.computeIcrfToFixedMatrix(time, this.sunMatrix) ??
+      Transforms.computeTemeToPseudoFixedMatrix(time, this.sunMatrix);
+    Matrix3.multiplyByVector(toFixed, inertial, result);
+    return Cartesian3.normalize(result, result);
+  }
+
+  /** Half the camera's field of view across the screen's width. */
+  private halfFovAcross() {
+    const { clientWidth: w, clientHeight: h } = this.widget.canvas;
+    const fov = (this.widget.scene.camera.frustum as { fov?: number }).fov ?? Math.PI / 3;
+    return w >= h ? fov / 2 : Math.atan(Math.tan(fov / 2) * (w / Math.max(1, h)));
+  }
+
+  /** Turns `from` toward `to` by `angle` radians (both unit vectors). */
+  private turnToward(from: Cartesian3, to: Cartesian3, angle: number, result: Cartesian3) {
+    const axis = Cartesian3.cross(from, to, this.aimScratch[3]!);
+    if (Cartesian3.magnitude(axis) < 1e-9 || angle === 0) return Cartesian3.clone(from, result);
+    Cartesian3.normalize(axis, axis);
+    const rotation = Matrix3.fromQuaternion(Quaternion.fromAxisAngle(axis, angle), new Matrix3());
+    return Matrix3.multiplyByVector(rotation, from, result);
+  }
+
+  /**
+   * While the globe turns, the camera's gaze leans gently toward the real Sun as it nears the
+   * frame, so the Sun rises beside the Earth's limb instead of hiding just off-screen. The Earth
+   * slides aside by at most 25 degrees; far from the Sun the gaze returns to the Earth's centre.
+   */
+  private aimTowardSun(blend: number) {
+    const camera = this.widget.scene.camera;
+    const [toCenter, sun, target] = this.aimScratch as [Cartesian3, Cartesian3, Cartesian3];
+    Cartesian3.normalize(Cartesian3.negate(camera.positionWC, toCenter), toCenter);
+    this.sunDirection(sun);
+    const apart = Cartesian3.angleBetween(toCenter, sun);
+    const half = this.halfFovAcross();
+    const lean = CesiumMath.clamp(apart - 0.8 * half, 0, CesiumMath.toRadians(25));
+    const fade = CesiumMath.clamp((half + CesiumMath.toRadians(30) - apart) / CesiumMath.toRadians(10), 0, 1);
+    this.turnToward(toCenter, sun, lean * fade, target);
+    const direction = Cartesian3.normalize(Cartesian3.lerp(camera.directionWC, target, blend, target), target);
+    const up = Cartesian3.normalize(
+      Cartesian3.subtract(
+        Cartesian3.UNIT_Z,
+        Cartesian3.multiplyByScalar(direction, Cartesian3.dot(direction, Cartesian3.UNIT_Z), new Cartesian3()),
+        new Cartesian3(),
+      ),
+      new Cartesian3(),
+    );
+    camera.setView({ orientation: { direction, up } });
+  }
+
+  /**
+   * Flies to where the real Sun stands just beyond the Earth's limb, its light falling on the
+   * day-side crescent. The view then holds until the visitor moves the globe.
+   */
+  faceSun() {
+    this.selection = null;
+    this.stopTracking();
+    this.clearSelectionPaths();
+    this.highlight();
+    const sun = this.sunDirection(new Cartesian3());
+    // A direction perpendicular to the Sun, roughly along the equator.
+    const side = Cartesian3.cross(Cartesian3.UNIT_Z, sun, new Cartesian3());
+    if (Cartesian3.magnitude(side) < 1e-6) Cartesian3.clone(Cartesian3.UNIT_X, side);
+    Cartesian3.normalize(side, side);
+    // 140 degrees round from the Sun: mostly night side, with the sunlit crescent facing the Sun.
+    const theta = CesiumMath.toRadians(140);
+    const out = Cartesian3.normalize(
+      Cartesian3.add(
+        Cartesian3.multiplyByScalar(sun, Math.cos(theta), new Cartesian3()),
+        Cartesian3.multiplyByScalar(side, Math.sin(theta), new Cartesian3()),
+        new Cartesian3(),
+      ),
+      new Cartesian3(),
+    );
+    const destination = Cartesian3.multiplyByScalar(out, 6_371_000 * 4.7, new Cartesian3());
+    const toCenter = Cartesian3.negate(out, new Cartesian3());
+    const lean = Math.max(0, Cartesian3.angleBetween(toCenter, sun) - 0.8 * this.halfFovAcross());
+    const direction = this.turnToward(toCenter, sun, lean, new Cartesian3());
+    const { clientWidth: w, clientHeight: h } = this.widget.canvas;
+    // Landscape: Sun beside the Earth; portrait: Sun above it.
+    const upHint = w >= h ? Cartesian3.UNIT_Z : sun;
+    const up = Cartesian3.normalize(
+      Cartesian3.subtract(
+        upHint,
+        Cartesian3.multiplyByScalar(direction, Cartesian3.dot(direction, upHint), new Cartesian3()),
+        new Cartesian3(),
+      ),
+      new Cartesian3(),
+    );
+    this.holdRotation = true;
+    const camera = this.widget.scene.camera;
+    if (this.options.reducedMotion) {
+      camera.setView({ destination, orientation: { direction, up } });
+    } else {
+      this.flying = true;
+      camera.flyTo({
+        destination,
+        orientation: { direction, up },
+        duration: 2.6,
+        easingFunction: EasingFunction.CUBIC_IN_OUT,
+        complete: () => {
+          this.flying = false;
+        },
+        cancel: () => {
+          this.flying = false;
+        },
+      });
+    }
+    this.render();
+  }
+
   setAutoRotate(on: boolean) {
     this.autoRotate = on && !this.options.reducedMotion;
+    if (on) this.holdRotation = false;
     if (!this.autoRotate) this.rotateRamp = 0;
     this.render();
   }
@@ -360,12 +502,14 @@ export class GlobeEngine {
     }
 
     const idle = Date.now() - this.lastInteraction > IDLE_BEFORE_ROTATE_MS;
-    const wantRotate = this.autoRotate && !this.selection && !this.tracked && !this.flying && idle;
+    const wantRotate =
+      this.autoRotate && !this.selection && !this.tracked && !this.flying && !this.holdRotation && idle;
     const wasRotating = this.rotateRamp > 0;
     // Ease in over 1.5 s so rotation never starts with a jolt; stop at once when touched.
     this.rotateRamp = wantRotate ? Math.min(1, this.rotateRamp + dt / 1.5) : 0;
     if (this.rotateRamp > 0) {
       camera.rotate(Cartesian3.UNIT_Z, -ROTATE_RAD_PER_S * smoothstep(this.rotateRamp) * dt);
+      this.aimTowardSun(Math.min(1, dt * 1.5));
       moving = true;
     }
     if (wasRotating !== this.rotateRamp > 0) this.onRotating(this.rotateRamp > 0);
@@ -487,10 +631,11 @@ export class GlobeEngine {
   /** Natural Earth land boundaries as flat [lon, lat, ...] arrays. */
   setBorders(lines: number[][]) {
     this.borders.removeAll();
-    const material = Material.fromType("Color", { color: Color.fromCssColorString("#dce8f5").withAlpha(0.32) });
+    const color = Color.fromCssColorString("#dce8f5").withAlpha(0.32);
     for (const flat of lines) {
       const positions = Cartesian3.fromDegreesArray(flat);
-      this.borders.add({ positions, width: 1, material });
+      // One material per line: Cesium destroys it with the line, so sharing one would double-destroy it.
+      this.borders.add({ positions, width: 1, material: Material.fromType("Color", { color }) });
     }
     this.widget.creditDisplay.addStaticCredit(naturalEarthCredit);
     this.render();
@@ -754,7 +899,7 @@ export class GlobeEngine {
     this.satelliteById.clear();
     const color = Color.fromCssColorString(DATA.satellite);
     const outline = Color.fromCssColorString("#04070c");
-    const trailMaterial = Material.fromType("Color", { color: color.withAlpha(0.32) });
+    const trailColor = color.withAlpha(0.32);
     const now = Date.now();
     for (const track of tracks) {
       const here = estimate(track, new Date(now));
@@ -780,7 +925,8 @@ export class GlobeEngine {
       const trail = this.satTrails.add({
         positions: here ? [...history, current] : [],
         width: 1.5,
-        material: trailMaterial,
+        // One material per trail: Cesium destroys it with the polyline (see setBorders).
+        material: Material.fromType("Color", { color: trailColor }),
         show: here !== null && this.trailsOn,
         id,
       });
@@ -1294,6 +1440,7 @@ export class GlobeEngine {
 
   destroy() {
     this.destroyed = true;
+    if (this.firstTilesTimer !== null) window.clearTimeout(this.firstTilesTimer);
     this.stopTracking();
     this.stopSatelliteClock();
     if (this.lightingTimer !== null) window.clearInterval(this.lightingTimer);

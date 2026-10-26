@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, RefreshCw, Search as SearchIcon, Settings2, X } from "lucide-react";
+import { ArrowRight, Menu, RefreshCw, Search as SearchIcon, Settings2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { PolarisMark } from "@/components/brand/PolarisMark";
 import { cx, StatusDot, statusLabel, Switch } from "@/components/ui/primitives";
@@ -139,6 +139,47 @@ function FeedStatus({ sources, onRefresh }: { sources: SourceHealth[] | null; on
   );
 }
 
+/** Below the width where the full nav fits, the site's pages are one tap away in a menu. */
+function SiteMenu() {
+  const [open, setOpen] = useState(false);
+  const ref = useDismiss(open, () => setOpen(false));
+  return (
+    <div ref={ref} className="relative lg:hidden">
+      <button
+        type="button"
+        aria-label="Site menu"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="press grid size-9 place-items-center rounded-[var(--radius-control)] text-ink-soft hover:bg-hover hover:text-ink"
+      >
+        <Menu size={17} strokeWidth={1.5} />
+      </button>
+      {open && (
+        <nav
+          aria-label="Site"
+          className="absolute right-0 top-[calc(100%+6px)] z-50 w-[220px] origin-top-right rounded-[var(--radius-panel)] border border-line bg-surface p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.55)] transition-[opacity,transform] duration-150 ease-[var(--ease-out)] starting:scale-[0.97] starting:opacity-0"
+        >
+          {NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              prefetch={item.href === "/about" ? undefined : false}
+              aria-current={item.href === "/" ? "page" : undefined}
+              onClick={() => setOpen(false)}
+              className={cx(
+                "block rounded-[6px] px-2.5 py-2.5 text-[14px] hover:bg-hover",
+                item.href === "/" ? "text-ink" : "text-ink-soft hover:text-ink",
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+      )}
+    </div>
+  );
+}
+
 function SettingsMenu({
   lowPower,
   setLowPower,
@@ -266,6 +307,7 @@ export function TopBar({
         <span>
           <FeedStatus sources={sources} onRefresh={onRefreshSources} />
         </span>
+        <SiteMenu />
         <SettingsMenu
           lowPower={lowPower}
           setLowPower={setLowPower}

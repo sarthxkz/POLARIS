@@ -1,0 +1,14 @@
+node_modules
+.next
+.cache
+public/cesium
+.git
+.env
+.env.*
+!.env.example
+.taste-skill
+.impeccable
+playwright-report
+test-results
+coverage
+*.log

@@ -15,3 +15,4 @@ next-env.d.ts
 .impeccable/live/
 .DS_Store
 .cache/
+deploy/out/

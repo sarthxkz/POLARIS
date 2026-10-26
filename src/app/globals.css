@@ -290,3 +290,100 @@ a {
   border-radius: 0;
   animation: none;
 }
+
+/* Skip link: off-screen until focused by keyboard. */
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 8px 12px;
+  border-radius: var(--radius-control);
+  background: var(--color-ink);
+  color: var(--color-ground);
+  font-weight: 500;
+  translate: 0 -150%;
+  transition: translate 150ms var(--ease-out);
+}
+.skip-link:focus-visible {
+  translate: 0 0;
+}
+
+/* Read-page header: transparent over the hero, a quiet surface once the page scrolls. */
+.site-header {
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease;
+  border-bottom: 1px solid transparent;
+}
+[data-scrolled] .site-header {
+  background-color: color-mix(in oklab, var(--color-ground) 92%, transparent);
+  border-bottom-color: var(--color-line);
+}
+
+/* FAQ: native <details>, opening smoothly where the browser can animate to auto height. */
+:root {
+  interpolate-size: allow-keywords;
+}
+.faq::details-content {
+  block-size: 0;
+  overflow: hidden;
+  transition:
+    block-size 260ms var(--ease-out),
+    content-visibility 260ms allow-discrete;
+}
+.faq[open]::details-content {
+  block-size: auto;
+}
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+.faq .faq-chevron {
+  transition: rotate 200ms var(--ease-out);
+}
+.faq[open] .faq-chevron {
+  rotate: 180deg;
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq::details-content {
+    transition: none;
+  }
+}
+
+/* Print: read pages on white with black ink; interactive chrome left off the paper. */
+@media print {
+  :root {
+    --color-ground: #ffffff;
+    --color-surface: #ffffff;
+    --color-raised: #f2f2f2;
+    --color-hover: #f2f2f2;
+    --color-line: #d0d0d0;
+    --color-line-strong: #b0b0b0;
+    --color-ink: #000000;
+    --color-ink-soft: #333333;
+    --color-ink-faint: #555555;
+  }
+  html,
+  body {
+    background: #ffffff;
+  }
+  .no-print,
+  .skip-link {
+    display: none !important;
+  }
+  .site-header {
+    position: static;
+  }
+  .mask-line > span,
+  .fade-up {
+    animation: none;
+  }
+  .faq::details-content {
+    block-size: auto;
+    content-visibility: visible;
+  }
+  section,
+  figure {
+    break-inside: avoid;
+  }
+}

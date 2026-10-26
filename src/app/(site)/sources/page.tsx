@@ -46,7 +46,7 @@ export default async function SourcesPage() {
   return (
     <>
       <SiteHeader current="/sources" />
-      <main>
+      <main id="main" tabIndex={-1} className="outline-none">
         <PageHero
           lines={["Where every number", "on POLARIS comes from"]}
           sentence={

@@ -65,7 +65,7 @@ export default async function EventsPage() {
   return (
     <>
       <SiteHeader current="/events" />
-      <main>
+      <main id="main" tabIndex={-1} className="outline-none">
         <PageHero
           lines={["What the planet did", "in the past seven days"]}
           sentence={

@@ -20,6 +20,7 @@ colors:
   red: "#ff5d5d"
   sand: "#cdb68c"
   aircraft: "#c9d6e6"
+  print-paper: "#ffffff"
 typography:
   display:
     fontFamily: "Work Sans, ui-sans-serif, system-ui, sans-serif"
@@ -184,6 +185,9 @@ A near-black blue world in which hue is evidence: the chrome is colourless, and 
 - **Hairline** (`line`) and **Strong Hairline** (`line-strong`): panel borders and internal section dividers; strong is for the off switch, focused field border, dashed empty states and the scrollbar thumb.
 - **Ink** (`ink`), **Soft Ink** (`ink-soft`), **Faint Ink** (`ink-faint`): primary text; secondary text and inactive controls; captions, units, ages and metadata.
 
+### Print
+The print stylesheet swaps the dark world for paper: ground and surfaces become print-paper #ffffff and ink becomes #000000, with soft and faint inks at #333333 and #555555. Interactive chrome (header actions, footer nav, back-to-top, skip link) is left off the page.
+
 ### The Open-Space Field (accepted exception)
 The space around the globe is Cesium's real star-catalogue skybox, not the midnight ground. It samples near-neutral black (about #040404) with real stars. This is an accepted exception from the finish review: the void is the actual sky, while panels and read pages carry `ground`. Do not tint the skybox to match the ground and do not replace it with a flat fill.
 
@@ -281,6 +285,9 @@ Select an object: the camera flies there (cubic in-out, 1.4-1.6s), a cyan ring d
 
 ### Globe Motion
 The globe turns west to east at 1.6°/s when idle, easing in over 1.5s after 5s without input and stopping the instant it is touched (off under reduced motion; pause/play in the controls and settings). First visit only: the canvas fades in over 900ms once its first tiles draw while the camera glides in from 2.3x distance (2.8s, quartic out), and the chrome arrives from its own edges (top, left, right, bottom; 560-640ms, delays 300-620ms); after arrival the same panels answer clicks in 240ms with no delay. Satellites glide between once-a-second SGP4 keyframes every frame and trail their last three minutes in glacier at 32%. Selecting a satellite flies out beside it (2.4s) and hands the camera to Cesium's entity tracking (east-north-up frame), with a live readout card beside the ring that flips left near the right edge.
+
+### Sunlight and the Sun
+Sunlight is real and always applied (Cesium's default switches lighting off closer than ~10,000 km; POLARIS keeps it at every distance): the day side is lit from the Sun's true position at the current time, night keeps half its detail (vertex shadow 0.5) with VIIRS city lights. The Sun is drawn with a 2.2x glow. While the globe turns, the gaze leans up to 25 degrees toward the Sun as it nears the frame so it rises beside the limb; "Face the Sun" (controls stack) flies to a view 140 degrees round from the Sun where its light falls on the day-side crescent, and holds there until the globe is touched. Rendering is full device resolution capped at 2x, with tile screen-space error 1.
 
 ### Read Row
 A two-ended row: glyph or status dot, 16px name with a 14px soft sub-line on the left, a short tabular value at the far right; nothing drawn between rows; linked rows take a `raised` hover. On phones the value drops under the name.

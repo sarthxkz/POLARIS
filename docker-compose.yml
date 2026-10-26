@@ -1,0 +1,31 @@
+# POLARIS on the Oracle VM. Like the portfolio, it publishes no port: Vybe's Caddy (which owns
+# 80/443) reaches it over Vybe's `edge` network and serves polaris.sarthxkz.in with automatic HTTPS.
+# Run from this folder on the VM: docker compose up -d --build
+name: polaris
+
+services:
+  polaris:
+    build: .
+    image: polaris:latest
+    env_file: .env
+    environment:
+      SITE_URL: https://polaris.sarthxkz.in
+    volumes:
+      # CelesTrak element cache survives restarts (CelesTrak refuses repeat downloads within ~2 h).
+      - polaris-cache:/app/.cache
+    security_opt: ['no-new-privileges:true']
+    cap_drop: [ALL]
+    mem_limit: 1g
+    networks: [edge]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: '3' }
+
+volumes:
+  polaris-cache:
+
+networks:
+  edge:
+    external: true
+    name: vybe_edge

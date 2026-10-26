@@ -22,6 +22,7 @@ import type { AircraftPayload, AircraftRow, NaturalEvent, PlaceResult } from "@/
 import { Field } from "@/components/ui/primitives";
 import { CategoryGlyph } from "./LayerRail";
 import { WeatherCard } from "./WeatherCard";
+import { CopyButton } from "@/components/ui/CopyButton";
 import { SatelliteView } from "@/components/ui/SatelliteView";
 
 function Heading({ title, meta, children }: { title: string; meta: ReactNode; children?: ReactNode }) {
@@ -40,6 +41,19 @@ function Fields({ children }: { children: ReactNode }) {
 
 function Caveat({ children }: { children: ReactNode }) {
   return <p className="border-t border-line px-4 py-3 text-xs leading-relaxed text-ink-faint">{children}</p>;
+}
+
+/** Copy actions for the selected object: a link that reopens it, and/or its coordinates. */
+function CopyRow({ path, lat, lon }: { path?: string; lat?: number; lon?: number }) {
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  return (
+    <div className="flex flex-wrap gap-1 border-t border-line px-2.5 py-2">
+      {path && <CopyButton text={`${origin}${path}`} label="Copy link" />}
+      {lat !== undefined && lon !== undefined && (
+        <CopyButton text={`${lat.toFixed(5)}, ${lon.toFixed(5)}`} label="Copy coordinates" />
+      )}
+    </div>
+  );
 }
 
 function Links({ links }: { links: { label: string; url: string }[] }) {
@@ -187,6 +201,7 @@ export function EventDetail({
         )}
         <Field label="Source">{e.provider === "usgs" ? "USGS Earthquake Hazards Program" : "NASA EONET"}</Field>
       </Fields>
+      <CopyRow path={`/?event=${encodeURIComponent(e.id)}`} lat={e.lat} lon={e.lon} />
       <Links links={e.links} />
       <section className="border-t border-line px-4 py-3.5">
         <h3 className="mb-2 text-[13px] font-medium text-ink">Seen from orbit</h3>
@@ -246,6 +261,7 @@ export function AircraftDetail({ row, payload }: { row: AircraftRow; payload: Ai
           {snapshot ? formatUtc(snapshot) : "—"}
         </Field>
       </Fields>
+      <CopyRow lat={lat} lon={lon} />
       <Links
         links={[
           {
@@ -298,6 +314,7 @@ export function SatelliteDetail({ track, retrievedAt }: { track: SatelliteTrack;
         </Field>
         <Field label="Elements fetched">{retrievedAt ? formatUtc(retrievedAt) : "—"}</Field>
       </Fields>
+      <CopyRow path={`/?sat=${el.NORAD_CAT_ID}`} />
       <Links
         links={[
           { label: "CelesTrak catalogue record", url: `https://celestrak.org/satcat/table-satcat.php?CATNR=${el.NORAD_CAT_ID}&FORMAT=` },
@@ -341,6 +358,7 @@ export function PlaceDetail({
         <Field label="Coordinates">{formatLatLon(place.lat, place.lon, 4)}</Field>
         {country && country.name !== place.name && <Field label="Country">{country.name}</Field>}
       </Fields>
+      <CopyRow lat={place.lat} lon={place.lon} />
       {country && (
         <section className="border-t border-line px-1.5 py-3">
           <h3 className="px-2.5 text-[13px] font-medium text-ink">

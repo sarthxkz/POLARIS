@@ -62,7 +62,7 @@ export default function AboutPage() {
             </p>
           </div>
           <div className="mt-12">
-            <p className="text-[22px] font-light tracking-[-0.01em] text-ink">POLARIS</p>
+            <p className="text-lg font-medium text-ink">POLARIS</p>
             <p className="text-[14px] text-ink-soft">World Intelligence System</p>
           </div>
           <Link

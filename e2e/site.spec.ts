@@ -64,6 +64,9 @@ test.describe("Pages", () => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(String(e)));
     await page.goto("/");
+    // The event list rests folded on desktop; open it from its chip.
+    const chip = page.getByRole("button", { name: /^Events \d/ });
+    if (await chip.isVisible()) await chip.click();
     await expect(page.getByRole("heading", { name: /^Events/ }).filter({ visible: true }).first()).toBeVisible({ timeout: 60_000 });
     const first = page.locator("ol button").filter({ visible: true }).first();
     await first.click();

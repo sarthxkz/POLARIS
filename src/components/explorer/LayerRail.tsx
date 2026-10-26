@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { CATEGORY_LABEL } from "@/lib/categories";
 import { CATEGORY_COLOR, DATA } from "@/lib/palette";
@@ -125,8 +125,9 @@ const IMAGERY: { key: ImageryKey; label: string; detail: (t: Record<string, stri
   { key: "labels", label: "Country and city names", detail: () => "Natural Earth" },
 ];
 
-export function LayerRail(props: ExplorerShared) {
-  const { layers, setLayers, events, aircraft, satellites, imagery, windowDays, setWindowDays } = props;
+export function LayerRail(props: ExplorerShared & { embedded?: boolean }) {
+  const { layers, setLayers, events, aircraft, satellites, imagery, windowDays, setWindowDays, embedded, railOpen, setRailOpen } =
+    props;
   const now = useNow(30_000);
 
   const counts = useMemo(() => {
@@ -168,12 +169,44 @@ export function LayerRail(props: ExplorerShared) {
 
   const snapshot = aircraft.data?.snapshotTime ? aircraft.data.snapshotTime * 1000 : null;
 
+  if (!embedded && !railOpen) {
+    return (
+      <button
+        type="button"
+        data-occludes-globe
+        onClick={() => setRailOpen(true)}
+        aria-expanded={false}
+        className="press intro-left absolute top-[calc(var(--bar-h)+4px)] left-3 z-20 flex items-center gap-2 rounded-[var(--radius-panel)] border border-line bg-surface px-3 py-2 text-[13px] text-ink hover:bg-hover"
+      >
+        <PanelLeftOpen aria-hidden size={15} strokeWidth={1.5} className="text-ink-soft" />
+        Layers
+      </button>
+    );
+  }
+
   return (
     <aside
       data-occludes-globe
       aria-label="Layers"
-      className="absolute top-[calc(var(--bar-h)+4px)] bottom-[calc(var(--timeline-h)+20px)] left-3 z-20 flex w-[var(--rail-w)] flex-col overflow-hidden rounded-[var(--radius-panel)] border border-line bg-surface"
+      className={cx(
+        "absolute top-[calc(var(--bar-h)+4px)] bottom-[calc(var(--timeline-h)+20px)] left-3 z-20 flex w-[var(--rail-w)] flex-col overflow-hidden rounded-[var(--radius-panel)] border border-line bg-surface",
+        !embedded && "intro-left",
+      )}
     >
+      {!embedded && (
+        <div className="flex items-center justify-between border-b border-line py-1.5 pr-1.5 pl-3.5">
+          <span className="text-[13px] font-medium text-ink">Layers</span>
+          <button
+            type="button"
+            onClick={() => setRailOpen(false)}
+            aria-label="Hide the layer list"
+            title="Hide the layer list"
+            className="press grid size-7 place-items-center rounded-[6px] text-ink-faint hover:bg-hover hover:text-ink"
+          >
+            <PanelLeftClose size={15} strokeWidth={1.5} />
+          </button>
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto overscroll-contain">
         <Section
           title="Natural events"
@@ -375,6 +408,12 @@ export function LayerRail(props: ExplorerShared) {
               </Notice>
             </div>
           )}
+          <LayerRow
+            on={layers.satTrails}
+            onToggle={() => setLayers((l) => ({ ...l, satTrails: !l.satTrails }))}
+            label="Recent paths"
+            detail="Each satellite's last three minutes"
+          />
           <p className="px-2 pt-2 text-xs text-ink-faint">
             Positions estimated each second with SGP4 from CelesTrak elements
             {satellites.data?.retrievedAt ? `, retrieved ${formatAge(satellites.data.retrievedAt, now)}` : ""}. Estimates,
@@ -407,7 +446,9 @@ export function LayerRail(props: ExplorerShared) {
               observation.
             </p>
           )}
-          <p className="px-2 pt-2 text-xs text-ink-faint">Base imagery: NASA Blue Marble via GIBS.</p>
+          <p className="px-2 pt-2 text-xs text-ink-faint">
+            Base imagery: Sentinel-2 cloudless 2024 by EOX, from Copernicus data.
+          </p>
         </Section>
       </div>
     </aside>

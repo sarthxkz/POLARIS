@@ -6,6 +6,7 @@
 | `public/cesium/**` | CesiumJS runtime assets (web workers, star-map skybox, credits, textures) | Copied from the `cesium` npm package (Apache-2.0) by `scripts/copy-cesium-assets.mjs` on install, dev and build. Generated, not committed. |
 | `public/data/*.json` | Country borders, country and city names and outlines | Natural Earth (public domain), compacted by `scripts/build-natural-earth.mjs`. See `public/data/SOURCES.md`. |
 | `src/components/globe/glyphs.ts` | Globe marker glyphs | Lucide icons (ISC), extracted by `scripts/gen-marker-glyphs.mjs`. |
+| Base globe imagery | Sentinel-2 cloudless 2024 | EOX IT Services GmbH, contains modified Copernicus Sentinel data 2024; CC BY-NC-SA 4.0, loaded live from `tiles.maps.eox.at` and credited on the globe. |
 | Globe imagery, event pictures | Blue Marble, VIIRS Black Marble, VIIRS true colour, GOES/Himawari infrared, IMERG precipitation | NASA GIBS, loaded live from `gibs.earthdata.nasa.gov`; nothing is stored in the repository. |
 
 No generated (AI) images ship in this project.

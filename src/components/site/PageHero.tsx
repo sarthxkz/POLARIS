@@ -83,7 +83,7 @@ export function Row({
       <span className="flex min-w-0 items-start gap-2.5">
         {dot && <span className="mt-[5px] shrink-0">{dot}</span>}
         <span className="min-w-0">
-          <span className="block text-[16px] text-ink">{label}</span>
+          <span className="block text-[17px] text-ink">{label}</span>
           {sub && <span className="block text-[14px] text-ink-soft">{sub}</span>}
           {value && <span className="num block text-[14px] text-ink-soft sm:hidden">{value}</span>}
         </span>

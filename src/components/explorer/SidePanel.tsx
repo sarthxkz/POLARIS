@@ -62,7 +62,7 @@ export function SidePanel(props: ExplorerShared) {
         type="button"
         data-occludes-globe
         onClick={() => setFeedOpen(true)}
-        className="press absolute top-[calc(var(--bar-h)+4px)] right-3 z-20 flex items-center gap-2 rounded-[var(--radius-panel)] border border-line bg-surface px-3 py-2 text-[13px] text-ink hover:bg-hover"
+        className="press intro-right absolute top-[calc(var(--bar-h)+4px)] right-3 z-20 flex items-center gap-2 rounded-[var(--radius-panel)] border border-line bg-surface px-3 py-2 text-[13px] text-ink hover:bg-hover"
       >
         <PanelRightOpen aria-hidden size={15} strokeWidth={1.5} className="text-ink-soft" />
         Events <span className="num text-ink-faint">{visibleEvents.length}</span>
@@ -74,7 +74,7 @@ export function SidePanel(props: ExplorerShared) {
     <aside
       data-occludes-globe
       aria-label={selection ? "Selected object" : "Event feed"}
-      className="absolute top-[calc(var(--bar-h)+4px)] right-3 bottom-[calc(var(--timeline-h)+20px)] z-20 flex w-[var(--panel-w)] flex-col overflow-hidden rounded-[var(--radius-panel)] border border-line bg-surface"
+      className="intro-right absolute top-[calc(var(--bar-h)+4px)] right-3 bottom-[calc(var(--timeline-h)+20px)] z-20 flex w-[var(--panel-w)] flex-col overflow-hidden rounded-[var(--radius-panel)] border border-line bg-surface"
     >
       {selection ? (
         <>

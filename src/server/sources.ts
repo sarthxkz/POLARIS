@@ -91,7 +91,7 @@ export const SOURCE_META: SourceMeta[] = [
   {
     id: "gibs",
     name: "NASA GIBS",
-    supplies: "Satellite imagery tiles: Blue Marble, city lights, daily true colour, cloud infrared, precipitation.",
+    supplies: "Satellite imagery tiles: city lights, daily true colour, cloud infrared, precipitation.",
     homepage: "https://earthdata.nasa.gov/gibs",
     terms: "NASA open data; no key required.",
     refreshSeconds: 600,

@@ -10,6 +10,8 @@ page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 
 await page.goto(base);
+await page.waitForTimeout(3000);
+await page.getByRole("button", { name: /^Events \d/ }).click();
 await page.getByRole("heading", { name: /^Events/ }).first().waitFor({ timeout: 60000 });
 await page.waitForTimeout(14000);
 await page.screenshot({ path: `${out}/i1-home.png` });

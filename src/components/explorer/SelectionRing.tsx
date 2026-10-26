@@ -16,10 +16,13 @@ export function SelectionRing({
   engine,
   selection,
   reducedMotion,
+  children,
 }: {
   engine: GlobeEngine | null;
   selection: Selection | null;
   reducedMotion: boolean;
+  /** Content that rides beside the ring (the followed satellite's live readout). */
+  children?: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const circle = useRef<SVGCircleElement>(null);
@@ -36,6 +39,8 @@ export function SelectionRing({
         }
         el.style.opacity = "1";
         el.style.transform = `translate(${p.x - SIZE / 2}px, ${p.y - SIZE / 2}px)`;
+        // Content riding beside the ring flips to the left when the right side lacks room.
+        el.dataset.side = p.x > window.innerWidth - 660 ? "left" : "right";
       },
       onFlight: (seconds) => {
         const c = circle.current;
@@ -59,7 +64,7 @@ export function SelectionRing({
     <div
       ref={ref}
       aria-hidden
-      className="pointer-events-none absolute top-0 left-0 z-10 opacity-0 transition-opacity duration-150"
+      className="group pointer-events-none absolute top-0 left-0 z-10 opacity-0 transition-opacity duration-150"
       style={{ width: SIZE, height: SIZE }}
     >
       <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
@@ -76,6 +81,7 @@ export function SelectionRing({
           transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
         />
       </svg>
+      {children}
     </div>
   );
 }

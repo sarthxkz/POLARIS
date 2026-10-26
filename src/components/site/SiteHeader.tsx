@@ -20,6 +20,7 @@ export function SiteHeader({ current }: { current: (typeof LINKS)[number]["href"
           <Link
             key={l.href}
             href={l.href}
+            prefetch={l.href === "/about" ? undefined : false}
             aria-current={current === l.href ? "page" : undefined}
             className={
               current === l.href
@@ -49,13 +50,13 @@ export function SiteFooter() {
         <Link href="/" className="text-ink hover:underline">
           Globe
         </Link>
-        <Link href="/events" className="text-ink hover:underline">
+        <Link prefetch={false} href="/events" className="text-ink hover:underline">
           Events
         </Link>
-        <Link href="/satellites" className="text-ink hover:underline">
+        <Link prefetch={false} href="/satellites" className="text-ink hover:underline">
           Satellites
         </Link>
-        <Link href="/sources" className="text-ink hover:underline">
+        <Link prefetch={false} href="/sources" className="text-ink hover:underline">
           Sources
         </Link>
         <Link href="/about" className="text-ink hover:underline">

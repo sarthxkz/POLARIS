@@ -117,8 +117,9 @@ export function normalizeEonetEvent(raw: unknown): NaturalEvent | null {
 /** Open events of any age, plus events closed in the last `closedDays` days. */
 export async function loadEonet(closedDays = 14): Promise<NaturalEvent[]> {
   const [open, closed] = await Promise.all([
-    fetchJson(`${API}?status=open`),
-    fetchJson(`${API}?status=closed&days=${closedDays}`),
+    // All open events are about 5 MB and EONET can be slow to send them.
+    fetchJson(`${API}?status=open`, { timeoutMs: 60_000 }),
+    fetchJson(`${API}?status=closed&days=${closedDays}`, { timeoutMs: 60_000 }),
   ]);
   const byId = new Map<string, NaturalEvent>();
   for (const payload of [open, closed]) {

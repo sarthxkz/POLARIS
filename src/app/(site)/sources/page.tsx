@@ -114,7 +114,7 @@ export default async function SourcesPage() {
 
           <Section title="NASA GIBS: imagery">
             <p>
-              The Earth itself is NASA’s Blue Marble; the night side shows VIIRS city lights from the 2016 Black Marble
+              By day the Earth is Sentinel-2 cloudless 2024 by EOX IT Services, a 10 m mosaic made from Copernicus Sentinel-2 data (CC BY-NC-SA 4.0, used here non-commercially); the night side shows VIIRS city lights from the 2016 Black Marble
               composite. Optional layers add the latest daily VIIRS true-colour swaths, GOES and Himawari cloud infrared
               every ten minutes, and GPM IMERG precipitation estimates, each labelled with the time GIBS published it.
               The pictures beside events are VIIRS true colour for the day of observation.
@@ -144,7 +144,7 @@ export default async function SourcesPage() {
           <Section title="Credits">
             <p className="text-ink-soft">
               Natural events: NASA Earth Observatory Natural Event Tracker (EONET). Earthquakes: U.S. Geological Survey.
-              Aircraft: The OpenSky Network, opensky-network.org. Orbital elements: CelesTrak. Imagery: we acknowledge the
+              Aircraft: The OpenSky Network, opensky-network.org. Orbital elements: CelesTrak. Base imagery: Sentinel-2 cloudless by EOX (contains modified Copernicus Sentinel data 2024). Other imagery: we acknowledge the
               use of imagery from NASA’s Global Imagery Browse Services (GIBS), part of NASA’s Earth Science Data and
               Information System (ESDIS). Weather and geocoding: Open-Meteo.com (CC BY 4.0) and GeoNames. Borders and
               place names: Natural Earth. Globe engine: CesiumJS. Icons: Lucide.

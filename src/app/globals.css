@@ -81,7 +81,7 @@ p {
 :focus-visible {
   outline: 2px solid var(--color-cyan);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 * {
@@ -157,7 +157,7 @@ a {
 /* Loading placeholders: flat bars at the value's real size, no shimmer. */
 .skeleton {
   background: var(--color-raised);
-  border-radius: 3px;
+  border-radius: 6px;
 }
 
 /* The selected object's ring draws once around it (SVG stroke). */
@@ -198,10 +198,74 @@ a {
   }
 }
 
+/*
+ * First-load arrival for the chrome around the globe: each piece slides in from its own edge,
+ * staggered behind the globe's fade (rare, once per visit; total stagger capped under 400ms).
+ */
+.intro-down {
+  animation: intro-down 560ms cubic-bezier(0.16, 1, 0.3, 1) 300ms both;
+}
+.intro-left {
+  animation: intro-left 560ms cubic-bezier(0.16, 1, 0.3, 1) 420ms both;
+}
+.intro-right {
+  animation: intro-right 560ms cubic-bezier(0.16, 1, 0.3, 1) 500ms both;
+}
+.intro-up {
+  animation: intro-up 640ms cubic-bezier(0.16, 1, 0.3, 1) 620ms both;
+}
+@keyframes intro-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+@keyframes intro-left {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+@keyframes intro-right {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+}
+@keyframes intro-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* After the arrival, the same pieces answer clicks promptly: no delay, a routine 240ms. */
+[data-arrived] :is(.intro-down, .intro-left, .intro-right, .intro-up) {
+  animation-delay: 0ms;
+  animation-duration: 240ms;
+}
+
+/* The followed satellite's readout opens from the ring it belongs to. */
+.hud-in {
+  animation: hud-in 220ms var(--ease-out) both;
+  transform-origin: left center;
+}
+@keyframes hud-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .panel-enter,
   .swap-in,
-  .fade-up {
+  .fade-up,
+  .intro-down,
+  .intro-left,
+  .intro-right,
+  .intro-up,
+  .hud-in {
     animation: fade 160ms ease both;
   }
   .mask-line > span {

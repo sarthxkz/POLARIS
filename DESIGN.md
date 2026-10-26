@@ -144,7 +144,7 @@ components:
 
 **Creative North Star: "The Quiet Instrument Over the Real Earth"**
 
-The Earth is the interface. NASA GIBS imagery is the planet's surface (Blue Marble by day, city lights by night, true-colour swaths and cloud infrared as layers), the terminator is real, and the globe runs edge to edge. Everything else is a small set of exact instrument readouts pinned to the window's edges: a top bar, a layer rail, an event feed that the selected object's details replace, and a seven-day timeline. Chrome is opaque graphite-navy on a midnight ground, typed in Work Sans at light-to-medium weights with tabular figures, and it never competes with the planet.
+The Earth is the interface. NASA GIBS imagery is the planet's surface (Sentinel-2 cloudless by EOX by day, city lights by night, true-colour swaths and cloud infrared as layers), the terminator is real, and the globe runs edge to edge. Everything else is a small set of exact instrument readouts pinned to the window's edges: a top bar, a layer rail, an event feed that the selected object's details replace, and a seven-day timeline. Chrome is opaque graphite-navy on a midnight ground, typed in Work Sans at light-to-medium weights with tabular figures, and it never competes with the planet.
 
 Colour belongs to data. Markers carry four hue families plus glacier blue for orbital estimates; cyan exists only for the selected object and keyboard focus. The read pages (Events, Satellites, Sources, About) share the same ground, ink and type but slow down: a split hero with a light display headline on one half and a live working fragment of the product on the other, then a narrow reading column with generous section breaks and two-ended rows with nothing drawn between them.
 
@@ -220,7 +220,7 @@ The space around the globe is Cesium's real star-catalogue skybox, not the midni
 
 ## Layout
 
-**Explorer.** The globe fills the viewport behind fixed chrome. A 56px top bar holds the mark and wordmark (left), a 440px search field (centre), site nav, UTC clock and feed count (right), each cluster on its own surface pill so the globe shows between them. The layer rail (296px) floats 12px from the left edge; the event feed / details panel (368px) floats 12px from the right and is foldable to a single "Events n" button; both stop 20px above the 88px timeline at the bottom centre. Panel heights are bounded by the bar and timeline, and their content scrolls inside with contained overscroll. Zoom and home controls sit as a small vertical stack inside the right margin of the globe.
+**Explorer.** The globe fills the viewport behind fixed chrome. A 56px top bar holds the mark and wordmark (left), a 440px search field (centre), site nav, UTC clock and feed count (right), each cluster on its own surface pill so the globe shows between them. At rest the globe owns the screen: the layer rail folds to a "Layers" chip (top left) and the event feed to an "Events n" chip (top right), and a single light-weight sentence states the live picture bottom left ("Right now 6,768 aircraft are aloft, 320 satellites… and 503 natural events…"; never metric tiles). Opened, the layer rail (296px) floats 12px from the left edge and the event feed / details panel (368px) 12px from the right; details open on selection; both stop 20px above the 88px timeline at the bottom centre. Panel heights are bounded by the bar and timeline, and their content scrolls inside with contained overscroll. Rotate (pause/play), zoom and home controls sit as a small vertical stack inside the right margin of the globe. The timeline centres itself (max 760px) when the side panels are folded.
 
 **Phones.** One region at a time in a bottom sheet (events with the time window, layers, or details); the globe takes the upper part of the screen; feed status stays in the top bar; the replay timeline is desktop only.
 
@@ -278,6 +278,9 @@ A 7px round dot beside each feed: live, stale/rate-limited in amber, down in red
 
 ### Selection Ring (signature)
 Select an object: the camera flies there (cubic in-out, 1.4-1.6s), a cyan ring draws itself once around the object (520ms stroke-dashoffset), and the side panel crossfades from feed to details (180ms blur crossfade). Panels arriving on demand slide 12px from their edge over 220ms.
+
+### Globe Motion
+The globe turns west to east at 1.6°/s when idle, easing in over 1.5s after 5s without input and stopping the instant it is touched (off under reduced motion; pause/play in the controls and settings). First visit only: the canvas fades in over 900ms once its first tiles draw while the camera glides in from 2.3x distance (2.8s, quartic out), and the chrome arrives from its own edges (top, left, right, bottom; 560-640ms, delays 300-620ms); after arrival the same panels answer clicks in 240ms with no delay. Satellites glide between once-a-second SGP4 keyframes every frame and trail their last three minutes in glacier at 32%. Selecting a satellite flies out beside it (2.4s) and hands the camera to Cesium's entity tracking (east-north-up frame), with a live readout card beside the ring that flips left near the right edge.
 
 ### Read Row
 A two-ended row: glyph or status dot, 16px name with a 14px soft sub-line on the left, a short tabular value at the far right; nothing drawn between rows; linked rows take a `raised` hover. On phones the value drops under the name.

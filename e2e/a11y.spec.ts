@@ -10,6 +10,9 @@ for (const path of ["/", "/events", "/satellites", "/sources", "/about"]) {
     await page.goto(path);
     await page.waitForTimeout(1000);
     if (path === "/") {
+      // The event list rests folded on desktop; open it from its chip.
+      const chip = page.getByRole("button", { name: /^Events \d/ });
+      if (await chip.isVisible()) await chip.click();
       await expect(page.getByRole("heading", { name: /^Events/ }).filter({ visible: true }).first()).toBeVisible({ timeout: 60_000 });
     }
     const results = await new AxeBuilder({ page })

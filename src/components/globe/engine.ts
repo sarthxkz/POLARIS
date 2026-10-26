@@ -101,6 +101,9 @@ const GIBS = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best";
 const naturalEarthCredit = new Credit(
   '<a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Borders and names: Natural Earth</a>',
 );
+const eoxCredit = new Credit(
+  '<a href="https://s2maps.eu" target="_blank" rel="noopener">Sentinel-2 cloudless 2024 by EOX IT Services GmbH</a> (contains modified Copernicus Sentinel data 2024)',
+);
 const gibsCredit = new Credit(
   '<a href="https://earthdata.nasa.gov/gibs" target="_blank" rel="noopener">Imagery: NASA GIBS</a>',
 );
@@ -188,15 +191,22 @@ export class GlobeEngine {
   }
 
   constructor(container: HTMLElement, private options: EngineOptions) {
+    // Sentinel-2 cloudless: a 10 m true-colour mosaic, sharp from whole-globe views down to cities.
     const base = new ImageryLayer(
-      gibsLayer("BlueMarble_ShadedRelief_Bathymetry", null, "GoogleMapsCompatible_Level8", "jpeg", 8),
+      new UrlTemplateImageryProvider({
+        url: "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/GoogleMapsCompatible/{z}/{y}/{x}.jpg",
+        tilingScheme: new WebMercatorTilingScheme(),
+        maximumLevel: 14,
+        credit: eoxCredit,
+      }),
     );
 
     this.widget = new CesiumWidget(container, {
       baseLayer: base,
       requestRenderMode: true,
       maximumRenderTimeChange: Infinity,
-      useBrowserRecommendedResolution: true,
+      // Full device resolution keeps the globe crisp on high-density screens; low-power trades it away.
+      useBrowserRecommendedResolution: options.lowPower,
       scene3DOnly: true,
       msaaSamples: options.lowPower ? 1 : 4,
       showRenderLoopErrors: false,
@@ -215,8 +225,9 @@ export class GlobeEngine {
     globe.enableLighting = true; // real terminator from the sun's position at the current time
     globe.dynamicAtmosphereLighting = true;
     globe.dynamicAtmosphereLightingFromSun = true;
+    globe.vertexShadowDarkness = 0.5;
     globe.showGroundAtmosphere = !options.lowPower;
-    globe.maximumScreenSpaceError = options.lowPower ? 3 : 2;
+    globe.maximumScreenSpaceError = options.lowPower ? 3 : 1.5;
     globe.tileCacheSize = 200;
     if (scene.skyAtmosphere) scene.skyAtmosphere.show = true;
     scene.fog.enabled = true;
@@ -298,6 +309,8 @@ export class GlobeEngine {
 
   /** One-time arrival: the camera glides in from far out (rare, first-visit motion). */
   intro() {
+    // A deep link may already be flying to (or following) something; the arrival must not override it.
+    if (this.selection || this.tracked || this.flying) return;
     const destination = this.homeDestination(1);
     const camera = this.widget.scene.camera;
     if (this.options.reducedMotion) {
@@ -839,7 +852,7 @@ export class GlobeEngine {
       // The followed satellite is drawn by its icon instead of its point.
       entry.point.show = show && entry.track.noradId !== trackedId;
       entry.trail.show = show && this.trailsOn;
-      if (entry.label) entry.label.show = show;
+      if (entry.label) entry.label.show = show && entry.track.noradId !== trackedId;
     }
     this.render();
   }

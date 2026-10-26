@@ -88,7 +88,12 @@ export async function fetchJson<T = unknown>(url: string, options?: FetchOptions
   const response = await fetchProvider(url, options);
   try {
     return (await response.json()) as T;
-  } catch {
+  } catch (error) {
+    // The timeout also covers reading the body, so a slow large download ends here mid-stream.
+    const name = error instanceof Error ? error.name : "";
+    if (name === "TimeoutError" || name === "AbortError") {
+      throw new ProviderError(`${new URL(url).host} timed out while sending data`, null);
+    }
     throw new ProviderError(`Malformed JSON from ${new URL(url).host}`, response.status);
   }
 }

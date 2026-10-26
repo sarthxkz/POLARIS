@@ -19,6 +19,9 @@ interface Props {
   setCursor: (ms: number | null) => void;
   reducedMotion: boolean;
   loading: boolean;
+  /** Whether the layer list (left) and event list or details (right) are open beside it. */
+  leftOpen: boolean;
+  rightOpen: boolean;
 }
 
 /**
@@ -26,7 +29,17 @@ interface Props {
  * providers published in that bin (a storm track contributes one per position). Replay moves a
  * cursor through those real samples; nothing between them is interpolated or invented.
  */
-export function Timeline({ events, windowDays, setWindowDays, cursor, setCursor, reducedMotion, loading }: Props) {
+export function Timeline({
+  events,
+  windowDays,
+  setWindowDays,
+  cursor,
+  setCursor,
+  reducedMotion,
+  loading,
+  leftOpen,
+  rightOpen,
+}: Props) {
   const [playing, setPlaying] = useState(false);
   // "Now" is read only in the browser, after hydration, so server and client markup agree.
   const [end, setEnd] = useState(0);
@@ -60,7 +73,11 @@ export function Timeline({ events, windowDays, setWindowDays, cursor, setCursor,
     if (end === 0) return out;
     const first = new Date(start);
     first.setUTCHours(24, 0, 0, 0);
-    for (let t = first.getTime(); t < end; t += 86_400_000) out.push({ t, x: (t - start) / (end - start) });
+    for (let t = first.getTime(); t < end; t += 86_400_000) {
+      const x = (t - start) / (end - start);
+      // Labels are centred on their tick; skip ticks too close to an edge to fit their label.
+      if (x > 0.035 && x < 0.965) out.push({ t, x });
+    }
     return out;
   }, [start, end]);
 
@@ -77,7 +94,7 @@ export function Timeline({ events, windowDays, setWindowDays, cursor, setCursor,
       const dt = now - last;
       last = now;
       acc += dt;
-      if (acc >= (reducedMotion ? 400 : 120)) {
+      if (acc >= (reducedMotion ? 400 : 40)) {
         const advance = ((end - start) / REPLAY_MS) * acc;
         acc = 0;
         const next = (cursorRef.current ?? start) + advance;
@@ -130,7 +147,7 @@ export function Timeline({ events, windowDays, setWindowDays, cursor, setCursor,
     <section
       data-occludes-globe
       aria-label="Event history"
-      className="absolute right-[calc(var(--panel-w)+24px)] bottom-3 left-[calc(var(--rail-w)+24px)] z-20 flex h-[var(--timeline-h)] min-w-0 flex-col rounded-[var(--radius-panel)] border border-line bg-surface px-3 pt-2 pb-2 max-lg:right-3"
+      className={`intro-up absolute bottom-3 z-20 flex h-[var(--timeline-h)] min-w-0 flex-col rounded-[var(--radius-panel)] border border-line bg-surface px-3 pt-2 pb-2 max-lg:right-3 ${leftOpen ? "left-[calc(var(--rail-w)+24px)]" : "left-[max(12px,calc(50%-380px))]"} ${rightOpen ? "right-[calc(var(--panel-w)+24px)]" : "right-[max(12px,calc(50%-380px))]"}`}
     >
       <div className="flex items-center gap-2">
         <button

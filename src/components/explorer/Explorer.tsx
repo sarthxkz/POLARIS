@@ -16,7 +16,7 @@ import type {
   SourceHealth,
 } from "@/lib/types";
 import type { GlobeEngine, PickInfo, Selection } from "@/components/globe/engine";
-import { DEFAULT_LAYERS, MAX_ALTITUDE_M, type LayerState, type WindowDays } from "./state";
+import { DEFAULT_LAYERS, MAX_ALTITUDE_M, WINDOWS, type LayerState, type WindowDays } from "./state";
 import { TopBar } from "./TopBar";
 import { LayerRail } from "./LayerRail";
 import { SidePanel } from "./SidePanel";
@@ -25,6 +25,8 @@ import { SelectionRing } from "./SelectionRing";
 import { GlobeControls } from "./GlobeControls";
 import { MobileSheet } from "./MobileSheet";
 import type { LocalResult } from "./Search";
+import { LiveSummary } from "./LiveSummary";
+import { SatelliteHud } from "./SatelliteHud";
 
 const Globe = dynamic(() => import("@/components/globe/Globe"), {
   ssr: false,
@@ -46,7 +48,30 @@ export function Explorer() {
   const [cursor, setCursor] = useState<number | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [place, setPlace] = useState<PlaceResult | null>(null);
-  const [feedOpen, setFeedOpen] = useState(true);
+  // The globe owns the screen at rest: the layer list and event list fold to chips at the edges.
+  const [feedOpen, setFeedOpen] = useState(false);
+  const [railOpen, setRailOpen] = useState(false);
+  // Marks the end of the first-load arrival, after which panels answer clicks without delay.
+  const [arrived, setArrived] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setArrived(true), 1_800);
+    return () => window.clearTimeout(t);
+  }, []);
+  const [rotate, setRotateState] = useState(() => {
+    try {
+      return localStorage.getItem("polaris.rotate") !== "off";
+    } catch {
+      return true;
+    }
+  });
+  const setRotate = useCallback((on: boolean) => {
+    setRotateState(on);
+    try {
+      localStorage.setItem("polaris.rotate", on ? "on" : "off");
+    } catch {
+      /* preference only */
+    }
+  }, []);
   const [hover, setHover] = useState<(PickInfo & { x: number; y: number }) | null>(null);
 
   const events = usePolled<EventsData>("/api/events?days=14", 120_000);
@@ -177,8 +202,18 @@ export function Explorer() {
   }, [engine, layers.altitude, layers.ground]);
 
   useEffect(() => {
-    if (engine) engine.setSatellites(tracks);
+    if (!engine) return;
+    engine.setSatellites(tracks);
+    engine.setSatelliteLabelFont(getComputedStyle(document.body).fontFamily);
   }, [engine, tracks]);
+
+  useEffect(() => {
+    engine?.setSatelliteTrails(layers.satTrails);
+  }, [engine, layers.satTrails]);
+
+  useEffect(() => {
+    engine?.setAutoRotate(rotate);
+  }, [engine, rotate]);
 
   useEffect(() => {
     if (!engine) return;
@@ -204,7 +239,7 @@ export function Explorer() {
     if (!engine) return;
     const frame = requestAnimationFrame(() => engine.refreshOcclusion());
     return () => cancelAnimationFrame(frame);
-  }, [engine, selection, feedOpen]);
+  }, [engine, selection, feedOpen, railOpen]);
 
   // Aircraft trail: positions this server stored on earlier snapshots.
   useEffect(() => {
@@ -326,15 +361,31 @@ export function Explorer() {
     countries: naturalEarth?.countries ?? null,
     feedOpen,
     setFeedOpen,
+    railOpen,
+    setRailOpen,
   };
 
+  const airborne = aircraft.data ? aircraft.data.aircraft.filter((r) => !r[7]).length : null;
+  const satellitesShown = tracks.length ? tracks.filter((t) => layers.satelliteGroups[t.group]).length : null;
+  const selectedTrack = selection?.kind === "satellite" ? tracks.find((t) => t.noradId === selection.id) : undefined;
+
   return (
-    <div className="fixed inset-0 overflow-hidden bg-ground text-ink">
+    <div data-arrived={arrived || undefined} className="fixed inset-0 overflow-hidden bg-ground text-ink">
       <div className="absolute inset-x-0 top-0 bottom-0 max-md:bottom-[calc(46svh-14px)]">
         <Globe reducedMotion={reducedMotion} lowPower={lowPower} onReady={setEngine} />
       </div>
 
-      <SelectionRing engine={engine} selection={selection} reducedMotion={reducedMotion} />
+      <SelectionRing engine={engine} selection={selection} reducedMotion={reducedMotion}>
+        {selectedTrack && <SatelliteHud key={selectedTrack.noradId} track={selectedTrack} />}
+      </SelectionRing>
+      {!railOpen && !selection && cursor === null && (
+        <LiveSummary
+          aircraft={layers.aircraft ? airborne : null}
+          satellites={satellitesShown}
+          events={events.data ? visibleEvents.length : null}
+          windowLabel={WINDOWS.find((w) => w.days === windowDays)?.label ?? `${windowDays} days`}
+        />
+      )}
       {hover && !selection && (
         <div
           className="pointer-events-none absolute z-10 max-w-64 truncate rounded-[var(--radius-control)] bg-raised px-2 py-1 text-xs text-ink shadow-[0_6px_20px_rgba(0,0,0,0.45)]"
@@ -351,6 +402,9 @@ export function Explorer() {
         onRefreshSources={sources.refresh}
         lowPower={lowPower}
         setLowPower={setLowPower}
+        rotate={rotate}
+        setRotate={setRotate}
+        reducedMotion={reducedMotion}
       />
 
       <div className="hidden md:block">
@@ -364,10 +418,17 @@ export function Explorer() {
           setCursor={setCursor}
           reducedMotion={reducedMotion}
           loading={events.loading && !events.data}
+          leftOpen={railOpen}
+          rightOpen={feedOpen || selection !== null}
         />
       </div>
 
-      <GlobeControls engine={engine} />
+      <GlobeControls
+        engine={engine}
+        rotate={rotate && !reducedMotion}
+        setRotate={reducedMotion ? undefined : setRotate}
+        besidePanel={feedOpen || selection !== null}
+      />
 
       <div className="md:hidden">
         <MobileSheet {...shared} />
@@ -397,4 +458,6 @@ export type ExplorerShared = {
   countries: Country[] | null;
   feedOpen: boolean;
   setFeedOpen: (open: boolean) => void;
+  railOpen: boolean;
+  setRailOpen: (open: boolean) => void;
 };

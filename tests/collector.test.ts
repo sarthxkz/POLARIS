@@ -54,6 +54,20 @@ describe("collector", () => {
     expect(statusOf(s, null, 60_000)).toBe("limited");
   });
 
+  it("reports a first load still in flight as not loaded yet, not as down", async () => {
+    let release = () => {};
+    const c = createCollector({
+      id: id(),
+      ttlMs: 0,
+      load: () => new Promise<string>((resolve) => (release = () => resolve("ok"))),
+    });
+    const pending = c.get();
+    expect(statusOf(c.peek(), null, 60_000)).toBe("idle");
+    release();
+    await pending;
+    expect(statusOf(c.peek(), null, 60_000)).toBe("live");
+  });
+
   it("reports idle before the first request and down when nothing ever loaded", async () => {
     const c = createCollector({
       id: id(),

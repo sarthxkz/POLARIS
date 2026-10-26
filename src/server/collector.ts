@@ -17,6 +17,8 @@ export interface CollectorState<T> {
   nextAttempt: number;
   failures: number;
   limited: boolean;
+  /** A request is in flight right now. */
+  refreshing: boolean;
 }
 
 export interface CollectorOptions<T> {
@@ -54,11 +56,13 @@ export function createCollector<T>(options: CollectorOptions<T>): Collector<T> {
     nextAttempt: 0,
     failures: 0,
     limited: false,
+    refreshing: false,
   };
   let inflight: Promise<void> | null = null;
 
   async function refresh() {
     state.lastAttempt = Date.now();
+    state.refreshing = true;
     try {
       state.data = await load();
       state.lastSuccess = Date.now();
@@ -80,6 +84,10 @@ export function createCollector<T>(options: CollectorOptions<T>): Collector<T> {
     }
   }
 
+  const done = () => {
+    state.refreshing = false;
+  };
+
   const collector: Collector<T> = {
     id,
     ttlMs,
@@ -87,6 +95,7 @@ export function createCollector<T>(options: CollectorOptions<T>): Collector<T> {
       if (Date.now() >= state.nextAttempt) {
         inflight ??= refresh().finally(() => {
           inflight = null;
+          done();
         });
       }
       // With cached data in hand, a slow upstream should not hold the visitor up for long.
@@ -112,7 +121,8 @@ export function statusOf(
 ): SourceStatus {
   if (state.lastAttempt === null) return "idle";
   if (state.limited && state.data === null) return "limited";
-  if (state.data === null) return "down";
+  // Still fetching for the first time is "not loaded yet", not a failure.
+  if (state.data === null) return state.refreshing && state.failures === 0 ? "idle" : "down";
   if (state.lastError && state.limited) return "limited";
   const reference = newestObservationMs ?? state.lastSuccess ?? 0;
   if (Date.now() - reference > freshnessMs) return "stale";

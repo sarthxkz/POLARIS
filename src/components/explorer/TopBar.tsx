@@ -25,6 +25,9 @@ interface Props {
   onRefreshSources: () => void;
   lowPower: boolean;
   setLowPower: (v: boolean) => void;
+  rotate: boolean;
+  setRotate: (v: boolean) => void;
+  reducedMotion: boolean;
 }
 
 function UtcClock() {
@@ -136,7 +139,19 @@ function FeedStatus({ sources, onRefresh }: { sources: SourceHealth[] | null; on
   );
 }
 
-function SettingsMenu({ lowPower, setLowPower }: { lowPower: boolean; setLowPower: (v: boolean) => void }) {
+function SettingsMenu({
+  lowPower,
+  setLowPower,
+  rotate,
+  setRotate,
+  reducedMotion,
+}: {
+  lowPower: boolean;
+  setLowPower: (v: boolean) => void;
+  rotate: boolean;
+  setRotate: (v: boolean) => void;
+  reducedMotion: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useDismiss(open, () => setOpen(false));
   return (
@@ -152,6 +167,23 @@ function SettingsMenu({ lowPower, setLowPower }: { lowPower: boolean; setLowPowe
       </button>
       {open && (
         <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-[280px] origin-top-right rounded-[var(--radius-panel)] border border-line bg-surface p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.55)] transition-[opacity,transform] duration-150 ease-[var(--ease-out)] starting:scale-[0.97] starting:opacity-0">
+          <button
+            type="button"
+            onClick={() => setRotate(!rotate)}
+            disabled={reducedMotion}
+            className="flex w-full items-start gap-3 rounded-[6px] px-2.5 py-2 text-left hover:bg-hover disabled:opacity-50"
+            aria-pressed={rotate && !reducedMotion}
+          >
+            <div className="flex-1">
+              <div className="text-ink">Turn the globe when idle</div>
+              <div className="text-xs text-ink-faint">
+                {reducedMotion
+                  ? "Off because your device asks for reduced motion."
+                  : "A slow west-to-east turn that pauses whenever you touch the globe."}
+              </div>
+            </div>
+            <Switch on={rotate && !reducedMotion} />
+          </button>
           <button
             type="button"
             onClick={() => setLowPower(!lowPower)}
@@ -170,11 +202,21 @@ function SettingsMenu({ lowPower, setLowPower }: { lowPower: boolean; setLowPowe
   );
 }
 
-export function TopBar({ sources, onPlace, findLocal, onRefreshSources, lowPower, setLowPower }: Props) {
+export function TopBar({
+  sources,
+  onPlace,
+  findLocal,
+  onRefreshSources,
+  lowPower,
+  setLowPower,
+  rotate,
+  setRotate,
+  reducedMotion,
+}: Props) {
   const [mobileSearch, setMobileSearch] = useState(false);
   return (
     <>
-    <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex h-[var(--bar-h)] items-center gap-4 px-3 md:px-4">
+    <header className="intro-down pointer-events-none absolute inset-x-0 top-0 z-30 flex h-[var(--bar-h)] items-center gap-4 px-3 md:px-4">
       <Link href="/" className="pointer-events-auto flex shrink-0 items-center gap-2.5">
         <span aria-hidden>
           <PolarisMark size={30} />
@@ -194,6 +236,7 @@ export function TopBar({ sources, onPlace, findLocal, onRefreshSources, lowPower
           <Link
             key={item.href}
             href={item.href}
+            prefetch={item.href === "/about" ? undefined : false}
             aria-current={item.href === "/" ? "page" : undefined}
             className={cx(
               "rounded-[var(--radius-control)] px-2.5 py-2 text-[13px] transition-colors duration-150",
@@ -223,7 +266,13 @@ export function TopBar({ sources, onPlace, findLocal, onRefreshSources, lowPower
         <span>
           <FeedStatus sources={sources} onRefresh={onRefreshSources} />
         </span>
-        <SettingsMenu lowPower={lowPower} setLowPower={setLowPower} />
+        <SettingsMenu
+          lowPower={lowPower}
+          setLowPower={setLowPower}
+          rotate={rotate}
+          setRotate={setRotate}
+          reducedMotion={reducedMotion}
+        />
       </div>
     </header>
     {mobileSearch && (

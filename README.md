@@ -5,7 +5,7 @@
 A public website that puts live Earth-observation data on a 3D globe: natural events, earthquakes,
 aircraft, satellites and weather, each with its source and the time it was observed.
 
-- **Globe** (`/`) — CesiumJS globe on NASA Blue Marble with real VIIRS city lights on the night
+- **Globe** (`/`) — CesiumJS globe on Sentinel-2 cloudless imagery (EOX) with real VIIRS city lights on the night
   side, Natural Earth borders and names, a layer rail, an event feed, details for anything you
   select, and a 7-day timeline that replays recorded observations.
 - **Events** (`/events`), **Satellites** (`/satellites`), **Sources** (`/sources`), **About**

@@ -17,6 +17,8 @@ export interface LayerState {
   altitude: [number, number];
   ground: boolean;
   satelliteGroups: Record<string, boolean>;
+  /** Short trails behind satellites (their last three minutes). */
+  satTrails: boolean;
   imagery: Record<ImageryKey, boolean>;
 }
 
@@ -27,7 +29,8 @@ export const DEFAULT_LAYERS: LayerState = {
   aircraft: true,
   altitude: [0, MAX_ALTITUDE_M],
   ground: false,
-  satelliteGroups: { stations: true, visual: true, weather: false, "gps-ops": false, science: false },
+  satelliteGroups: { stations: true, visual: true, weather: true, "gps-ops": true, science: true },
+  satTrails: true,
   imagery: {
     nightLights: true,
     borders: true,

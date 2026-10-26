@@ -114,7 +114,7 @@ export function MobileSheet(props: ExplorerShared) {
               </div>
             ) : (
               <div className="mobile-rail absolute inset-0">
-                <LayerRail {...props} />
+                <LayerRail {...props} embedded />
               </div>
             )}
           </div>
